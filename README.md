@@ -58,8 +58,16 @@ rustore-fdroid -r ./repo list
 
 ### Sign the repository
 
+Generate a self-signed certificate (once):
+
 ```bash
-rustore-fdroid -r ./repo sign -c cert.pem -k key.pem
+openssl req -x509 -newkey rsa:4096 -keyout repo.key -out repo.crt -days 3650 -noenc -subj "/CN=My Repo"
+```
+
+Sign the index:
+
+```bash
+rustore-fdroid -r ./repo sign -c repo.crt -k repo.key
 ```
 
 Generates `index-v1.jar` with JAR signature (MANIFEST.MF + CERT.SF + PKCS7).
