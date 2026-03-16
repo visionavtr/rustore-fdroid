@@ -66,6 +66,9 @@ func JavaTime() int64 {
 }
 
 func TimestrToTimestamp(timestr string) (int64, error) {
+	if timestr == "" {
+		return JavaTime(), nil
+	}
 	t, err := time.Parse(time.RFC3339, timestr)
 	if err != nil {
 		t, err = time.Parse("2006-01-02T15:04:05", timestr)
