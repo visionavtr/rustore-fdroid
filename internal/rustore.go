@@ -14,7 +14,13 @@ const (
 	downloadLinkURL   = rustoreBaseURL + "/v2/download-link"
 )
 
+type rustoreResponse struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
 type OverallInfoResponse struct {
+	rustoreResponse
 	Body AppInfo `json:"body"`
 }
 
@@ -66,6 +72,10 @@ func FetchAppInfo(packageID string) (*AppInfo, error) {
 	var result OverallInfoResponse
 	if err := json.Unmarshal(body, &result); err != nil {
 		return nil, fmt.Errorf("parse app info: %w", err)
+	}
+
+	if result.Code == "ERROR" {
+		return nil, fmt.Errorf("app %q not found in RuStore", packageID)
 	}
 
 	return &result.Body, nil
