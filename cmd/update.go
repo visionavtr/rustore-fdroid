@@ -27,9 +27,16 @@ var updateCmd = &cobra.Command{
 			return nil
 		}
 
+		prefetched := prefetchMetadata(args)
+
 		for _, packageID := range args {
 			fmt.Printf("--- %s ---\n", packageID)
-			if err := addPackage(idx, packageID); err != nil {
+			pf := prefetched[packageID]
+			if pf.err != nil {
+				fmt.Printf("Error updating %s: %v\n", packageID, pf.err)
+				continue
+			}
+			if err := addPackageWithMeta(idx, pf.info, pf.dlInfo); err != nil {
 				fmt.Printf("Error updating %s: %v\n", packageID, err)
 				continue
 			}

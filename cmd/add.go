@@ -6,11 +6,18 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/cespare/xxhash/v2"
 	"github.com/spf13/cobra"
 	"github.com/visionavtr/rustore-fdroid/internal"
 )
+
+type prefetchResult struct {
+	info   *internal.AppInfo
+	dlInfo *internal.DownloadBody
+	err    error
+}
 
 var addCmd = &cobra.Command{
 	Use:   "add <package_id> [package_id...]",
@@ -22,9 +29,16 @@ var addCmd = &cobra.Command{
 			return err
 		}
 
+		prefetched := prefetchMetadata(args)
+
 		for _, packageID := range args {
 			fmt.Printf("--- %s ---\n", packageID)
-			if err := addPackage(idx, packageID); err != nil {
+			pf := prefetched[packageID]
+			if pf.err != nil {
+				fmt.Printf("Error adding %s: %v\n", packageID, pf.err)
+				continue
+			}
+			if err := addPackageWithMeta(idx, pf.info, pf.dlInfo); err != nil {
 				fmt.Printf("Error adding %s: %v\n", packageID, err)
 				continue
 			}
@@ -34,17 +48,44 @@ var addCmd = &cobra.Command{
 	},
 }
 
+func prefetchMetadata(packageIDs []string) map[string]prefetchResult {
+	results := make(map[string]prefetchResult, len(packageIDs))
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	for _, pkg := range packageIDs {
+		wg.Add(1)
+		go func(id string) {
+			defer wg.Done()
+			info, err := internal.FetchAppInfo(id)
+			if err != nil {
+				mu.Lock()
+				results[id] = prefetchResult{err: err}
+				mu.Unlock()
+				return
+			}
+			dlInfo, err := internal.FetchDownloadLink(info.AppID)
+			mu.Lock()
+			results[id] = prefetchResult{info: info, dlInfo: dlInfo, err: err}
+			mu.Unlock()
+		}(pkg)
+	}
+	wg.Wait()
+	return results
+}
+
+// addPackage fetches metadata and adds a package (used by update command).
 func addPackage(idx *internal.IndexV1, packageID string) error {
-	info, err := internal.FetchAppInfo(packageID)
-	if err != nil {
-		return err
+	pf := prefetchMetadata([]string{packageID})
+	r := pf[packageID]
+	if r.err != nil {
+		return r.err
 	}
+	return addPackageWithMeta(idx, r.info, r.dlInfo)
+}
 
-	dlInfo, err := internal.FetchDownloadLink(info.AppID)
-	if err != nil {
-		return err
-	}
-
+func addPackageWithMeta(idx *internal.IndexV1, info *internal.AppInfo, dlInfo *internal.DownloadBody) error {
+	var err error
 	var iconFile string
 	if info.IconURL != "" {
 		iconOutput := filepath.Join(repoPath, "icons", info.PackageName+".icon.jpg")
@@ -87,7 +128,7 @@ func addPackage(idx *internal.IndexV1, packageID string) error {
 
 	if !internal.PackageContainsVersion(idx, info.PackageName, info.VersionCode) {
 		if len(dlInfo.DownloadURLs) == 0 {
-			return fmt.Errorf("no download URLs available for %s", packageID)
+			return fmt.Errorf("no download URLs available for %s", info.PackageName)
 		}
 		dlURL := dlInfo.DownloadURLs[0]
 		apkFile := filepath.Join(repoPath, fmt.Sprintf("%s_%d.apk", info.PackageName, info.VersionCode))
