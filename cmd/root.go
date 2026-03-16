@@ -3,18 +3,30 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"runtime/debug"
 
 	"github.com/spf13/cobra"
 )
 
+var Version = "dev"
+
+func init() {
+	if Version == "dev" {
+		if info, ok := debug.ReadBuildInfo(); ok && info.Main.Version != "" && info.Main.Version != "(devel)" {
+			Version = info.Main.Version
+		}
+	}
+}
+
 var (
-	repoPath           string
-	downloadChunkSize  int
+	repoPath          string
+	downloadChunkSize int
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "rustore-fdroid",
-	Short: "RuStore to F-Droid bridge — generate F-Droid repos with apps from RuStore",
+	Use:     "rustore-fdroid",
+	Short:   "RuStore to F-Droid bridge — generate F-Droid repos with apps from RuStore",
+	Version: Version,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		if err := os.MkdirAll(repoPath, 0o755); err != nil {
 			return fmt.Errorf("create repo directory: %w", err)
