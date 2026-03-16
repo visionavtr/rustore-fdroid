@@ -1,1 +1,11 @@
 rustore-fdroid
+
+# F-Droid repo directory
+repo/
+
+# Signing keys
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
