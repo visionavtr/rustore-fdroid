@@ -142,7 +142,6 @@ func addPackageWithMeta(idx *internal.IndexV1, info *internal.AppInfo, dlInfo *i
 			Size:             dlURL.Size,
 			APKName:          filepath.Base(apkFile),
 			HashType:         "sha256",
-			Sig:              "deadbeef", // FIXME: implement sig
 			Signer:           dlInfo.Signature,
 			MinSdkVersion:    info.MinSdkVersion,
 			TargetSdkVersion: info.TargetSdkVersion,
@@ -166,6 +165,12 @@ func addPackageWithMeta(idx *internal.IndexV1, info *internal.AppInfo, dlInfo *i
 			}
 			indexPkg.Hash = apkHash
 		}
+
+		sig, err := internal.ExtractAPKSig(apkFile)
+		if err != nil {
+			fmt.Printf("Warning: failed to extract APK signature: %v\n", err)
+		}
+		indexPkg.Sig = sig
 
 		// Remove old versions (APK files + index entries)
 		for _, old := range idx.Packages[info.PackageName] {
