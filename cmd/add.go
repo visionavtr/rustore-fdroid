@@ -45,10 +45,13 @@ func addPackage(idx *internal.IndexV1, packageID string) error {
 		return err
 	}
 
-	iconOutput := filepath.Join(repoPath, "icons", info.PackageName+".icon.jpg")
-	iconFile, _, err := internal.DownloadAndGetSHA256(info.IconURL, iconOutput, 0)
-	if err != nil {
-		return fmt.Errorf("download icon: %w", err)
+	var iconFile string
+	if info.IconURL != "" {
+		iconOutput := filepath.Join(repoPath, "icons", info.PackageName+".icon.jpg")
+		iconFile, _, err = internal.DownloadAndGetSHA256(info.IconURL, iconOutput, 0)
+		if err != nil {
+			fmt.Printf("Warning: failed to download icon: %v\n", err)
+		}
 	}
 
 	appIdx := internal.FindAppIndex(idx, info.PackageName)
