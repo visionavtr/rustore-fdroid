@@ -10,23 +10,14 @@ import (
 
 var Version = "dev"
 
-func init() {
-	if Version == "dev" {
-		if info, ok := debug.ReadBuildInfo(); ok && info.Main.Version != "" && info.Main.Version != "(devel)" {
-			Version = info.Main.Version
-		}
-	}
-}
-
 var (
 	repoPath          string
 	downloadChunkSize int
 )
 
 var rootCmd = &cobra.Command{
-	Use:     "rustore-fdroid",
-	Short:   "RuStore to F-Droid bridge — generate F-Droid repos with apps from RuStore",
-	Version: Version,
+	Use:   "rustore-fdroid",
+	Short: "RuStore to F-Droid bridge — generate F-Droid repos with apps from RuStore",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		if err := os.MkdirAll(repoPath, 0o755); err != nil {
 			return fmt.Errorf("create repo directory: %w", err)
@@ -36,6 +27,12 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
+	if Version == "dev" {
+		if info, ok := debug.ReadBuildInfo(); ok && info.Main.Version != "" && info.Main.Version != "(devel)" {
+			Version = info.Main.Version
+		}
+	}
+	rootCmd.Version = Version
 	rootCmd.PersistentFlags().StringVarP(&repoPath, "repo", "r", "", "repository path")
 	rootCmd.PersistentFlags().IntVar(&downloadChunkSize, "download-chunk-size", 128*1024, "chunk size for file downloads")
 	_ = rootCmd.MarkPersistentFlagRequired("repo")
