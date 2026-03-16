@@ -18,7 +18,9 @@ var updateCmd = &cobra.Command{
 
 		if len(args) == 0 {
 			for _, app := range idx.Apps {
-				args = append(args, app.PackageName)
+				if app.PackageName != "" {
+					args = append(args, app.PackageName)
+				}
 			}
 		}
 
