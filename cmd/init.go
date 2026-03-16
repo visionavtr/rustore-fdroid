@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/visionavtr/rustore-fdroid/internal"
+	"github.com/visionavtr/rustore-fdroid/web"
 )
 
 var (
@@ -38,6 +39,13 @@ var initCmd = &cobra.Command{
 			return err
 		}
 
+		withFrontend, _ := cmd.Flags().GetBool("frontend")
+		if withFrontend {
+			if err := web.Install(repoPath); err != nil {
+				return err
+			}
+		}
+
 		fmt.Printf("New empty repository initialized at %s!\n", repoPath)
 		return nil
 	},
@@ -50,5 +58,6 @@ func init() {
 	_ = initCmd.MarkFlagRequired("name")
 	_ = initCmd.MarkFlagRequired("description")
 	_ = initCmd.MarkFlagRequired("address")
+	initCmd.Flags().Bool("frontend", false, "include web frontend (index.html)")
 	rootCmd.AddCommand(initCmd)
 }
