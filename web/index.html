@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>F-Droid Repository</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #faf9f7;
+    --bg-card: #ffffff;
+    --bg-card-hover: #fffefb;
+    --bg-modal: rgba(26, 26, 26, 0.45);
+    --accent: #d97706;
+    --accent-light: #fef3c7;
+    --accent-hover: #b45309;
+    --text: #1a1a1a;
+    --text-secondary: #6b7280;
+    --text-tertiary: #9ca3af;
+    --border: #e5e2dd;
+    --border-light: #f0eeea;
+    --orange: #ea580c;
+    --orange-bg: #fff7ed;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-xs: 6px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.04);
+    --shadow-lg: 0 4px 12px rgba(0,0,0,0.06), 0 12px 28px rgba(0,0,0,0.08);
+    --font: "Google Sans", sans-serif;
+    --font-heading: "Poppins", sans-serif;
+    --transition: 180ms ease;
+  }
+
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+  body {
+    font-family: var(--font);
+    font-weight: 450;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.018;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 200px;
+  }
+
+  .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── Header ── */
+  .header { padding: 48px 0 40px; border-bottom: 1px solid var(--border); }
+  .header h1 {
+    font-family: var(--font-heading);
+    font-size: 1.75rem; font-weight: 700;
+    letter-spacing: -0.02em; line-height: 1.2;
+  }
+  .header .description {
+    margin-top: 6px; font-size: 0.95rem;
+    color: var(--text-secondary); max-width: 520px;
+  }
+  .header-meta { display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap; }
+  .meta-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.8rem; color: var(--text-tertiary); letter-spacing: 0.01em;
+  }
+  .meta-chip svg { flex-shrink: 0; }
+
+  /* ── Toolbar ── */
+  .toolbar { display: flex; align-items: center; gap: 12px; padding: 24px 0 20px; flex-wrap: wrap; }
+  .search-box { flex: 1; min-width: 220px; position: relative; }
+  .search-box svg {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--text-tertiary); pointer-events: none;
+  }
+  .search-box input {
+    width: 100%; padding: 10px 14px 10px 42px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-size: 0.9rem; font-family: var(--font);
+    background: var(--bg-card); color: var(--text);
+    transition: border-color var(--transition), box-shadow var(--transition);
+    outline: none;
+  }
+  .search-box input::placeholder { color: var(--text-tertiary); }
+  .search-box input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
+  }
+  .app-count {
+    font-size: 0.82rem; color: var(--text-tertiary);
+    margin-left: auto; white-space: nowrap;
+  }
+
+  /* ── Grid ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px; padding-bottom: 64px;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--bg-card); border: 1px solid var(--border-light);
+    border-radius: var(--radius); padding: 20px;
+    cursor: pointer; transition: all var(--transition);
+    position: relative; overflow: hidden;
+    animation: card-in 0.35s ease both;
+  }
+  .card::after {
+    content: ""; position: absolute; inset: 0;
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    opacity: 0; transition: opacity var(--transition); pointer-events: none;
+  }
+  .card:hover {
+    border-color: var(--border); background: var(--bg-card-hover);
+    transform: translateY(-1px);
+  }
+  .card:hover::after { opacity: 1; }
+  @keyframes card-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-head { display: flex; gap: 14px; align-items: flex-start; }
+  .card-icon {
+    width: 48px; height: 48px; border-radius: var(--radius-sm);
+    object-fit: cover; background: var(--border-light); flex-shrink: 0;
+  }
+  .card-icon-placeholder {
+    width: 48px; height: 48px; border-radius: var(--radius-sm);
+    background: var(--accent-light); display: flex;
+    align-items: center; justify-content: center; flex-shrink: 0;
+    font-size: 1.1rem; font-weight: 700; color: var(--accent);
+  }
+  .card-info { flex: 1; min-width: 0; }
+  .card-title { font-family: var(--font-heading); font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; }
+  .card-author { font-size: 0.78rem; color: var(--text-tertiary); margin-top: 1px; }
+  .card-summary {
+    margin-top: 10px; font-size: 0.85rem; color: var(--text-secondary);
+    line-height: 1.5; display: -webkit-box;
+    -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .card-footer {
+    margin-top: 14px; display: flex; align-items: center;
+    justify-content: space-between; gap: 8px; flex-wrap: wrap;
+  }
+  .card-tags { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; min-width: 0; }
+  .tag {
+    display: inline-block; padding: 3px 9px; border-radius: 100px;
+    font-size: 0.7rem; font-weight: 500; letter-spacing: 0.02em;
+    background: var(--border-light); color: var(--text-secondary); white-space: nowrap;
+  }
+  .card-version {
+    font-size: 0.75rem; color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: var(--bg-modal);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    z-index: 1000; display: flex; align-items: flex-start;
+    justify-content: center; padding: 40px 20px; overflow-y: auto;
+    opacity: 0; transition: opacity 0.2s ease;
+  }
+  .modal-overlay.visible { opacity: 1; }
+  .modal-overlay.closing { opacity: 0; }
+
+  .modal {
+    background: var(--bg-card); border-radius: 16px;
+    box-shadow: var(--shadow-lg); width: 100%; max-width: 640px;
+    position: relative; transform: translateY(12px) scale(0.98);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+  }
+  .modal-overlay.visible .modal { transform: translateY(0) scale(1); }
+
+  .modal-close {
+    position: absolute; top: 16px; right: 16px;
+    width: 36px; height: 36px; display: flex;
+    align-items: center; justify-content: center;
+    border: none; background: var(--bg); border-radius: 50%;
+    cursor: pointer; color: var(--text-secondary);
+    transition: all var(--transition); z-index: 2;
+  }
+  .modal-close:hover { background: var(--border-light); color: var(--text); }
+
+  .modal-header { padding: 28px 28px 20px; display: flex; gap: 16px; align-items: flex-start; }
+  .modal-icon {
+    width: 64px; height: 64px; border-radius: var(--radius);
+    object-fit: cover; background: var(--border-light); flex-shrink: 0;
+  }
+  .modal-icon-placeholder {
+    width: 64px; height: 64px; border-radius: var(--radius);
+    background: var(--accent-light); display: flex;
+    align-items: center; justify-content: center; flex-shrink: 0;
+    font-size: 1.5rem; font-weight: 700; color: var(--accent);
+  }
+  .modal-title { font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; line-height: 1.25; }
+  .modal-pkg {
+    font-size: 0.78rem; color: var(--text-tertiary); margin-top: 3px;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    word-break: break-all;
+  }
+  .modal-author { font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px; }
+
+  .modal-body { padding: 0 28px 28px; }
+  .modal-section { margin-top: 20px; }
+  .modal-section:first-child { margin-top: 0; }
+  .modal-section-title {
+    font-family: var(--font-heading); font-size: 0.72rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-tertiary); margin-bottom: 8px;
+  }
+
+  .modal-description {
+    font-size: 0.88rem; color: var(--text-secondary);
+    line-height: 1.6; white-space: pre-wrap; word-break: break-word;
+  }
+  .modal-description.clamped { max-height: 120px; overflow: hidden; position: relative; }
+  .modal-description.clamped::after {
+    content: ""; position: absolute; bottom: 0; left: 0; right: 0;
+    height: 40px; background: linear-gradient(transparent, var(--bg-card));
+  }
+  .show-more-btn {
+    font-size: 0.82rem; color: var(--accent); cursor: pointer;
+    border: none; background: none; font-family: var(--font);
+    font-weight: 500; margin-top: 4px; padding: 0;
+  }
+  .show-more-btn:hover { text-decoration: underline; }
+
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+  .meta-item { background: var(--bg); border-radius: var(--radius-xs); padding: 10px 12px; }
+  .meta-label {
+    font-size: 0.68rem; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text-tertiary); margin-bottom: 3px;
+  }
+  .meta-value { font-size: 0.88rem; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+
+  .anti-features { display: flex; gap: 6px; flex-wrap: wrap; }
+  .anti-feature-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: 100px; font-size: 0.72rem;
+    font-weight: 500; background: var(--orange-bg); color: var(--orange);
+  }
+  .modal-categories { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* ── Version list ── */
+  .version-list { display: flex; flex-direction: column; gap: 8px; }
+  .version-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; background: var(--bg);
+    border-radius: var(--radius-xs); flex-wrap: wrap;
+  }
+  .version-name { font-family: var(--font-heading); font-size: 0.88rem; font-weight: 600; min-width: 80px; }
+  .version-code {
+    font-size: 0.75rem; color: var(--text-tertiary);
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  }
+  .version-size { font-size: 0.78rem; color: var(--text-secondary); margin-left: auto; }
+  .version-download {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 12px; border-radius: 100px; font-size: 0.75rem;
+    font-weight: 500; background: var(--accent); color: #fff;
+    text-decoration: none; transition: background var(--transition);
+  }
+  .version-download:hover { background: var(--accent-hover); }
+  .version-sdk { font-size: 0.72rem; color: var(--text-tertiary); width: 100%; margin-top: -2px; }
+
+  /* ── Empty / skeleton ── */
+  .empty { grid-column: 1 / -1; text-align: center; padding: 80px 20px; }
+  .empty-icon { width: 48px; height: 48px; margin: 0 auto 16px; color: var(--text-tertiary); opacity: 0.5; }
+  .empty-title { font-size: 1rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+  .empty-text { font-size: 0.85rem; color: var(--text-tertiary); }
+
+  .skeleton-card { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 20px; }
+  .skeleton-line { height: 12px; background: var(--border-light); border-radius: 6px; animation: shimmer 1.5s ease infinite; }
+  .skeleton-line.w60 { width: 60%; }
+  .skeleton-line.w80 { width: 80%; }
+  .skeleton-line.w40 { width: 40%; }
+  .skeleton-head { display: flex; gap: 14px; margin-bottom: 14px; }
+  .skeleton-avatar {
+    width: 48px; height: 48px; border-radius: var(--radius-sm);
+    background: var(--border-light); flex-shrink: 0; animation: shimmer 1.5s ease infinite;
+  }
+  .skeleton-lines { display: flex; flex-direction: column; gap: 8px; flex: 1; padding-top: 4px; }
+  @keyframes shimmer { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .header { padding: 32px 0 28px; }
+    .header h1 { font-size: 1.35rem; }
+    .grid { grid-template-columns: 1fr; }
+    .modal-overlay { padding: 20px 12px; }
+    .modal-header { padding: 20px 20px 16px; }
+    .modal-body { padding: 0 20px 20px; }
+    .toolbar { gap: 8px; }
+    .app-count { margin-left: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header class="header">
+    <div>
+      <h1 id="repo-name">F-Droid Repository</h1>
+      <p class="description" id="repo-desc"></p>
+    </div>
+    <div class="header-meta" id="header-meta"></div>
+  </header>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="search" placeholder="Search apps..." autocomplete="off" spellcheck="false">
+    </div>
+    <span class="app-count" id="app-count"></span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+(function() {
+  "use strict";
+
+  let indexData = null;
+  const $ = (s) => document.querySelector(s);
+  const grid = $("#grid");
+  const overlay = $("#modal-overlay");
+
+  function formatDate(ms) {
+    if (!ms) return "\u2014";
+    return new Date(ms).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  }
+
+  function formatSize(bytes) {
+    if (!bytes || bytes <= 0) return "\u2014";
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / 1048576).toFixed(1) + " MB";
+  }
+
+  function esc(str) {
+    if (!str) return "";
+    const d = document.createElement("div");
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function truncate(str, len) {
+    if (!str) return "";
+    return str.length > len ? str.slice(0, len) + "\u2026" : str;
+  }
+
+  function showSkeleton() {
+    let h = "";
+    for (let i = 0; i < 6; i++) {
+      h += `<div class="skeleton-card" style="animation-delay:${i * 60}ms">
+        <div class="skeleton-head"><div class="skeleton-avatar"></div>
+        <div class="skeleton-lines"><div class="skeleton-line w60"></div><div class="skeleton-line w40"></div></div></div>
+        <div class="skeleton-line w80" style="margin-top:10px"></div></div>`;
+    }
+    grid.innerHTML = h;
+  }
+
+  async function loadIndex() {
+    showSkeleton();
+    try {
+      const r = await fetch("index-v1.json");
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      indexData = await r.json();
+      renderHeader();
+      renderGrid(indexData.apps);
+    } catch (e) {
+      grid.innerHTML = `<div class="empty">
+        <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="48" height="48"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg></div>
+        <div class="empty-title">Could not load repository</div>
+        <div class="empty-text">${esc(e.message)}</div></div>`;
+    }
+  }
+
+  function renderHeader() {
+    const repo = indexData.repo;
+    $("#repo-name").textContent = repo.name || "F-Droid Repository";
+    $("#repo-desc").textContent = repo.description || "";
+    let m = "";
+    if (repo.timestamp)
+      m += `<span class="meta-chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Updated ${formatDate(repo.timestamp)}</span>`;
+    m += `<span class="meta-chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>${indexData.apps.length} app${indexData.apps.length !== 1 ? "s" : ""}</span>`;
+    if (repo.version)
+      m += `<span class="meta-chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>Index v${repo.version}</span>`;
+    if (repo.address)
+      m += `<span class="meta-chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>${esc(truncate(repo.address, 40))}</span>`;
+    $("#header-meta").innerHTML = m;
+  }
+
+  function renderGrid(apps) {
+    if (!apps.length) {
+      grid.innerHTML = `<div class="empty">
+        <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="48" height="48"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg></div>
+        <div class="empty-title">No apps found</div>
+        <div class="empty-text">Try a different search query</div></div>`;
+      updateAppCount(0);
+      return;
+    }
+    updateAppCount(apps.length);
+    let h = "";
+    apps.forEach((app, i) => {
+      const iconSrc = app.icon ? `icons/${app.icon}` : "";
+      const initial = (app.name || app.packageName || "?")[0].toUpperCase();
+      const iconHtml = iconSrc
+        ? `<img class="card-icon" src="${esc(iconSrc)}" alt="" loading="lazy" onerror="this.outerHTML='<div class=\\'card-icon-placeholder\\'>${initial}</div>'">`
+        : `<div class="card-icon-placeholder">${initial}</div>`;
+      const cats = (app.categories || []).slice(0, 3).map(c => `<span class="tag">${esc(c)}</span>`).join("");
+
+      h += `<div class="card" data-pkg="${esc(app.packageName)}" style="animation-delay:${Math.min(i * 40, 400)}ms">
+        <div class="card-head">${iconHtml}
+          <div class="card-info">
+            <div class="card-title">${esc(app.name || app.packageName)}</div>
+            <div class="card-author">${esc(app.authorName || "")}</div>
+          </div>
+        </div>
+        <div class="card-summary">${esc(app.summary || "")}</div>
+        <div class="card-footer">
+          <div class="card-tags">${cats}</div>
+          <span class="card-version">v${esc(app.suggestedVersionName || "?")}</span>
+        </div>
+      </div>`;
+    });
+    grid.innerHTML = h;
+    grid.querySelectorAll(".card").forEach(c => c.addEventListener("click", () => openModal(c.dataset.pkg)));
+  }
+
+  function updateAppCount(n) {
+    const total = indexData ? indexData.apps.length : 0;
+    $("#app-count").textContent = n === total
+      ? `${total} app${total !== 1 ? "s" : ""}`
+      : `${n} of ${total} apps`;
+  }
+
+  // ── Search ──
+
+  let searchTimeout;
+  $("#search").addEventListener("input", function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      const q = this.value.trim().toLowerCase();
+      if (!indexData) return;
+      if (!q) { renderGrid(indexData.apps); return; }
+      renderGrid(indexData.apps.filter(a =>
+        (a.name || "").toLowerCase().includes(q) ||
+        (a.packageName || "").toLowerCase().includes(q) ||
+        (a.summary || "").toLowerCase().includes(q) ||
+        (a.authorName || "").toLowerCase().includes(q) ||
+        (a.categories || []).some(c => c.toLowerCase().includes(q))
+      ));
+    }, 180);
+  });
+
+  // ── Modal ──
+
+  function openModal(pkg) {
+    const app = indexData.apps.find(a => a.packageName === pkg);
+    if (!app) return;
+    const pkgs = (indexData.packages[pkg] || []).sort((a, b) => b.versionCode - a.versionCode);
+
+    const iconSrc = app.icon ? `icons/${app.icon}` : "";
+    const initial = (app.name || app.packageName || "?")[0].toUpperCase();
+    const iconHtml = iconSrc
+      ? `<img class="modal-icon" src="${esc(iconSrc)}" alt="" onerror="this.outerHTML='<div class=\\'modal-icon-placeholder\\'>${initial}</div>'">`
+      : `<div class="modal-icon-placeholder">${initial}</div>`;
+
+    const desc = esc(app.description || app.summary || "No description available.");
+    const longDesc = (app.description || "").length > 250;
+
+    let antiHtml = "";
+    if (app.antiFeatures && app.antiFeatures.length) {
+      antiHtml = `<div class="modal-section">
+        <div class="modal-section-title">Anti-Features</div>
+        <div class="anti-features">${app.antiFeatures.map(f =>
+          `<span class="anti-feature-tag"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 9v4M12 17h.01"/></svg>${esc(f)}</span>`
+        ).join("")}</div></div>`;
+    }
+
+    let catHtml = "";
+    if (app.categories && app.categories.length) {
+      catHtml = `<div class="modal-section">
+        <div class="modal-section-title">Categories</div>
+        <div class="modal-categories">${app.categories.map(c => `<span class="tag">${esc(c)}</span>`).join("")}</div></div>`;
+    }
+
+    let versionsHtml = "";
+    if (pkgs.length) {
+      versionsHtml = `<div class="modal-section">
+        <div class="modal-section-title">Versions</div>
+        <div class="version-list">${pkgs.map(p => `
+          <div class="version-row">
+            <span class="version-name">v${esc(p.versionName)}</span>
+            <span class="version-code">#${p.versionCode}</span>
+            <span class="version-size">${formatSize(p.size)}</span>
+            <a class="version-download" href="${esc(p.apkName)}" onclick="event.stopPropagation()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+              APK</a>
+            <span class="version-sdk">SDK ${p.minSdkVersion}\u2013${p.targetSdkVersion}</span>
+          </div>`).join("")}
+        </div></div>`;
+    }
+
+    $("#modal").innerHTML = `
+      <button class="modal-close" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+      <div class="modal-header">
+        ${iconHtml}
+        <div>
+          <div class="modal-title">${esc(app.name || app.packageName)}</div>
+          <div class="modal-pkg">${esc(app.packageName)}</div>
+          <div class="modal-author">${esc(app.authorName || "Unknown author")}</div>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="modal-section">
+          <div class="modal-section-title">About</div>
+          <div class="modal-description${longDesc ? " clamped" : ""}" id="modal-desc">${desc}</div>
+          ${longDesc ? `<button class="show-more-btn" id="show-more">Show more</button>` : ""}
+        </div>
+        <div class="modal-section">
+          <div class="modal-section-title">Details</div>
+          <div class="meta-grid">
+            <div class="meta-item"><div class="meta-label">Version</div><div class="meta-value">v${esc(app.suggestedVersionName || "?")}</div></div>
+            <div class="meta-item"><div class="meta-label">License</div><div class="meta-value">${esc(app.license || "Unknown")}</div></div>
+            <div class="meta-item"><div class="meta-label">Added</div><div class="meta-value">${formatDate(app.added)}</div></div>
+            <div class="meta-item"><div class="meta-label">Updated</div><div class="meta-value">${formatDate(app.lastUpdated)}</div></div>
+          </div>
+        </div>
+        ${catHtml}${antiHtml}${versionsHtml}
+      </div>`;
+
+    overlay.style.display = "flex";
+    requestAnimationFrame(() => overlay.classList.add("visible"));
+    document.body.style.overflow = "hidden";
+
+    overlay.querySelector(".modal-close").addEventListener("click", closeModal);
+    const showMore = document.getElementById("show-more");
+    if (showMore) showMore.addEventListener("click", () => {
+      document.getElementById("modal-desc").classList.remove("clamped");
+      showMore.remove();
+    });
+  }
+
+  function closeModal() {
+    overlay.classList.remove("visible");
+    overlay.classList.add("closing");
+    document.body.style.overflow = "";
+    setTimeout(() => { overlay.style.display = "none"; overlay.classList.remove("closing"); }, 220);
+  }
+
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) closeModal(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && overlay.classList.contains("visible")) closeModal(); });
+
+  loadIndex();
+})();
+</script>
+</body>
+</html>
