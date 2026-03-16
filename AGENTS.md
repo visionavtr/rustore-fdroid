@@ -42,6 +42,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):
 ```
 
 - **Types**: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `build`
-- **Scopes**: `cli`, `api`, `index`, `sign`, `download`
+- **Scopes**: `cli`, `api`, `index`, `sign`, `download`, `web`
+- **Scope is required** — always include it
 - Breaking changes: add `!` after type/scope (e.g. `feat!: ...`)
 - Keep the subject line under 72 characters
