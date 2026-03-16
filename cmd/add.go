@@ -85,6 +85,9 @@ func addPackage(idx *internal.IndexV1, packageID string) error {
 }
 
 func addPackageWithMeta(idx *internal.IndexV1, info *internal.AppInfo, dlInfo *internal.DownloadBody) error {
+	if info.PackageName == "" {
+		return fmt.Errorf("empty package name in app info")
+	}
 	var err error
 	var iconFile string
 	if info.IconURL != "" {
