@@ -172,6 +172,12 @@ func addPackageWithMeta(idx *internal.IndexV1, info *internal.AppInfo, dlInfo *i
 		}
 		indexPkg.Sig = sig
 
+		perms, err := internal.ExtractPermissions(apkFile)
+		if err != nil {
+			fmt.Printf("Warning: failed to extract permissions: %v\n", err)
+		}
+		indexPkg.UsesPermission = perms
+
 		// Remove old versions (APK files + index entries)
 		for _, old := range idx.Packages[info.PackageName] {
 			oldPath := filepath.Join(repoPath, old.APKName)

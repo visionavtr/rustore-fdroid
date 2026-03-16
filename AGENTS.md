@@ -46,3 +46,13 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):
 - **Scope is required** — always include it
 - Breaking changes: add `!` after type/scope (e.g. `feat!: ...`)
 - Keep the subject line under 72 characters
+
+## Versioning
+
+The project uses [Semantic Versioning](https://semver.org/) via git tags (e.g. `v0.2.0`).
+
+- **patch** (`v0.1.x`): bug fixes
+- **minor** (`v0.x.0`): new features, non-breaking changes
+- **major** (`vX.0.0`): breaking changes
+
+After committing a `feat` or breaking change, create a new version tag accordingly.

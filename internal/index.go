@@ -47,18 +47,19 @@ type App struct {
 }
 
 type Package struct {
-	PackageName      string `json:"packageName"`
-	Added            int64  `json:"added"`
-	Size             int64  `json:"size"`
-	APKName          string `json:"apkName"`
-	HashType         string `json:"hashType"`
-	Sig              string `json:"sig"`
-	Signer           string `json:"signer"`
-	MinSdkVersion    int    `json:"minSdkVersion"`
-	TargetSdkVersion int    `json:"targetSdkVersion"`
-	VersionCode      int    `json:"versionCode"`
-	VersionName      string `json:"versionName"`
-	Hash             string `json:"hash"`
+	PackageName      string  `json:"packageName"`
+	Added            int64   `json:"added"`
+	Size             int64   `json:"size"`
+	APKName          string  `json:"apkName"`
+	HashType         string  `json:"hashType"`
+	Sig              string  `json:"sig"`
+	Signer           string  `json:"signer"`
+	MinSdkVersion    int     `json:"minSdkVersion"`
+	TargetSdkVersion int     `json:"targetSdkVersion"`
+	VersionCode      int     `json:"versionCode"`
+	VersionName      string  `json:"versionName"`
+	Hash             string  `json:"hash"`
+	UsesPermission   [][]any `json:"uses-permission,omitempty"`
 }
 
 func JavaTime() int64 {

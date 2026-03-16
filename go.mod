@@ -5,6 +5,7 @@ go 1.23
 require (
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/schollz/progressbar/v3 v3.18.0
+	github.com/shogo82148/androidbinary v1.0.5
 	github.com/spf13/cobra v1.9.1
 	go.mozilla.org/pkcs7 v0.9.0
 )

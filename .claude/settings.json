@@ -3,7 +3,12 @@
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
-        "command": "case \"$CLAUDE_FILE_PATH\" in *.go) gofmt -w \"$CLAUDE_FILE_PATH\" ;; esac"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "case \"$CLAUDE_FILE_PATH\" in *.go) gofmt -w \"$CLAUDE_FILE_PATH\" ;; esac"
+          }
+        ]
       }
     ]
   }
