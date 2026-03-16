@@ -31,6 +31,13 @@ func DownloadAndGetSHA256(url, output string, size int64) (string, string, error
 
 	hash := sha256.New()
 
+	if size <= 0 {
+		size = resp.ContentLength
+	}
+	if size <= 0 {
+		size = -1
+	}
+
 	bar := progressbar.DefaultBytes(size, "Downloading "+filepath.Base(output))
 	writer := io.MultiWriter(f, hash, bar)
 
