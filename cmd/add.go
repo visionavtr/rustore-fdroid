@@ -167,7 +167,17 @@ func addPackageWithMeta(idx *internal.IndexV1, info *internal.AppInfo, dlInfo *i
 			indexPkg.Hash = apkHash
 		}
 
-		idx.Packages[info.PackageName] = append(idx.Packages[info.PackageName], indexPkg)
+		// Remove old versions (APK files + index entries)
+		for _, old := range idx.Packages[info.PackageName] {
+			oldPath := filepath.Join(repoPath, old.APKName)
+			if err := os.Remove(oldPath); err != nil && !os.IsNotExist(err) {
+				fmt.Printf("Warning: failed to remove old APK %s: %v\n", old.APKName, err)
+			} else if err == nil {
+				fmt.Printf("Removed old version: %s\n", old.APKName)
+			}
+		}
+
+		idx.Packages[info.PackageName] = []internal.Package{indexPkg}
 	}
 
 	return nil

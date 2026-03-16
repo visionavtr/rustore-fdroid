@@ -23,8 +23,10 @@ All commands require `-r`/`--repo` flag pointing to the repository directory.
 ### Initialize a new repository
 
 ```bash
-rustore-fdroid -r ./repo init -n "My Repo" -d "My F-Droid repository" -a "https://example.com/repo"
+rustore-fdroid -r ./repo init -n "My Repo" -d "My F-Droid repository" -a "https://example.com/repo" --frontend
 ```
+
+Use `--frontend` to include the web UI in the repo directory.
 
 ### Add apps
 
@@ -74,15 +76,17 @@ Generates `index-v1.jar` with JAR signature (MANIFEST.MF + CERT.SF + PKCS7).
 
 ## Web Frontend
 
-A static single-page app is included in `web/index.html`. It reads `index-v1.json` and displays apps with icons, metadata, search, and a detail modal with version history and APK download links.
-
-To serve it, copy `web/index.html` into the repo directory and point any HTTP server (Caddy, nginx, etc.) at it:
+The frontend is embedded in the binary and can be managed with:
 
 ```bash
-cp web/index.html ./repo/
-# with Caddy:
-caddy file-server --root ./repo --listen :8080
+# install into repo (or use --frontend on init)
+rustore-fdroid -r ./repo frontend add
+
+# remove from repo
+rustore-fdroid -r ./repo frontend remove
 ```
+
+Point any HTTP server (Caddy, nginx, etc.) at the repo directory — the frontend reads `index-v1.json` and displays apps with search, metadata, version history, and APK download links.
 
 ## License
 
