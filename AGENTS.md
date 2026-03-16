@@ -49,10 +49,11 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):
 
 ## Versioning
 
-The project uses [Semantic Versioning](https://semver.org/) via git tags (e.g. `v0.2.0`).
+The project uses [Semantic Versioning](https://semver.org/) via git tags (e.g. `v0.2.1`).
 
 - **patch** (`v0.1.x`): bug fixes
 - **minor** (`v0.x.0`): new features, non-breaking changes
 - **major** (`vX.0.0`): breaking changes
-
-After committing a `feat` or breaking change, create a new version tag accordingly.
+- After committing a `feat` or breaking change, create a new version tag accordingly
+- **Never force-move tags** — Go module proxy caches tag contents permanently; a moved tag will serve stale code to `go install` users. If a tag was released with a bug, bump the version instead
+- Version is set via `cmd.Version` variable: `go install` picks it up from `debug.ReadBuildInfo()`, local builds can use `-ldflags "-X github.com/visionavtr/rustore-fdroid/cmd.Version=vX.Y.Z"`
