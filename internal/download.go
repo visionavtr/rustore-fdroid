@@ -17,11 +17,15 @@ func DownloadAndGetSHA256(url, output string, size int64) (string, string, error
 		return "", "", fmt.Errorf("create directory: %w", err)
 	}
 
-	resp, err := http.Get(url)
+	resp, err := httpClient.Get(url)
 	if err != nil {
 		return "", "", fmt.Errorf("download: %w", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", "", fmt.Errorf("download: HTTP %d", resp.StatusCode)
+	}
 
 	f, err := os.Create(output)
 	if err != nil {

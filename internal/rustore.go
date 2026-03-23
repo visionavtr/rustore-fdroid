@@ -6,12 +6,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
+	"time"
 )
 
-const (
-	rustoreBaseURL    = "https://backapi.rustore.ru/applicationData"
-	overallInfoURL    = rustoreBaseURL + "/overallInfo/"
-	downloadLinkURL   = rustoreBaseURL + "/v2/download-link"
+const rustoreBaseURL = "https://backapi.rustore.ru/applicationData"
+
+// Mutable for testing.
+var (
+	fetchAppInfoURL      = rustoreBaseURL + "/overallInfo/"
+	fetchDownloadLinkURL = rustoreBaseURL + "/v2/download-link"
 )
 
 type rustoreResponse struct {
@@ -57,12 +61,42 @@ type DownloadURL struct {
 	Hash string `json:"hash"`
 }
 
+// httpClient is a shared HTTP client with a reasonable timeout.
+// The timeout covers the entire request lifecycle including body download,
+// so it must be generous enough for large APK files (hundreds of MB).
+var httpClient = &http.Client{Timeout: 10 * time.Minute}
+
+// validPackageName matches a valid Android package name (Java-style identifier).
+var validPackageName = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$`)
+
+// ValidatePackageName checks that the name looks like a real Android package ID
+// and cannot be used for path traversal.
+func ValidatePackageName(name string) error {
+	if name == "" {
+		return fmt.Errorf("empty package name")
+	}
+	if !validPackageName.MatchString(name) {
+		return fmt.Errorf("invalid package name %q", name)
+	}
+	return nil
+}
+
 func FetchAppInfo(packageID string) (*AppInfo, error) {
-	resp, err := http.Get(overallInfoURL + packageID)
+	return WithRetry("fetch app info", func() (*AppInfo, error) {
+		return fetchAppInfo(packageID)
+	})
+}
+
+func fetchAppInfo(packageID string) (*AppInfo, error) {
+	resp, err := httpClient.Get(fetchAppInfoURL + packageID)
 	if err != nil {
 		return nil, fmt.Errorf("fetch app info: %w", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("fetch app info: HTTP %d", resp.StatusCode)
+	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -78,17 +112,31 @@ func FetchAppInfo(packageID string) (*AppInfo, error) {
 		return nil, fmt.Errorf("app %q not found in RuStore", packageID)
 	}
 
+	if err := ValidatePackageName(result.Body.PackageName); err != nil {
+		return nil, fmt.Errorf("rustore returned %w", err)
+	}
+
 	return &result.Body, nil
 }
 
 func FetchDownloadLink(appID int) (*DownloadBody, error) {
+	return WithRetry("fetch download link", func() (*DownloadBody, error) {
+		return fetchDownloadLink(appID)
+	})
+}
+
+func fetchDownloadLink(appID int) (*DownloadBody, error) {
 	payload, _ := json.Marshal(map[string]int{"appId": appID})
 
-	resp, err := http.Post(downloadLinkURL, "application/json", bytes.NewReader(payload))
+	resp, err := httpClient.Post(fetchDownloadLinkURL, "application/json", bytes.NewReader(payload))
 	if err != nil {
 		return nil, fmt.Errorf("fetch download link: %w", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("fetch download link: HTTP %d", resp.StatusCode)
+	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
