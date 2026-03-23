@@ -5,7 +5,7 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/rsa"
-	"crypto/sha1"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
@@ -34,7 +34,10 @@ func SignJAR(repoPath, certPath, keyPath string) error {
 		return err
 	}
 
-	ext := keyTypeExtension(key)
+	ext, err := keyTypeExtension(key)
+	if err != nil {
+		return err
+	}
 
 	jarPath := IndexV1Path(repoPath)[:len(IndexV1Path(repoPath))-5] + ".jar"
 
@@ -71,27 +74,27 @@ func SignJAR(repoPath, certPath, keyPath string) error {
 }
 
 func buildManifest(indexData []byte) []byte {
-	digest := sha1.Sum(indexData)
+	digest := sha256.Sum256(indexData)
 	b64 := base64.StdEncoding.EncodeToString(digest[:])
 
 	return []byte("Manifest-Version: 1.0\r\n\r\n" +
 		"Name: index-v1.json\r\n" +
-		"SHA1-Digest: " + b64 + "\r\n\r\n")
+		"SHA-256-Digest: " + b64 + "\r\n\r\n")
 }
 
 func buildSignatureFile(manifest []byte) []byte {
-	manifestDigest := sha1.Sum(manifest)
+	manifestDigest := sha256.Sum256(manifest)
 	manifestB64 := base64.StdEncoding.EncodeToString(manifestDigest[:])
 
 	// Digest of the individual section (everything after the main section)
 	section := findSection(manifest)
-	sectionDigest := sha1.Sum(section)
+	sectionDigest := sha256.Sum256(section)
 	sectionB64 := base64.StdEncoding.EncodeToString(sectionDigest[:])
 
 	return []byte("Signature-Version: 1.0\r\n" +
-		"SHA1-Digest-Manifest: " + manifestB64 + "\r\n\r\n" +
+		"SHA-256-Digest-Manifest: " + manifestB64 + "\r\n\r\n" +
 		"Name: index-v1.json\r\n" +
-		"SHA1-Digest: " + sectionB64 + "\r\n\r\n")
+		"SHA-256-Digest: " + sectionB64 + "\r\n\r\n")
 }
 
 func findSection(manifest []byte) []byte {
@@ -167,13 +170,13 @@ func createPKCS7Signature(data []byte, cert *x509.Certificate, key crypto.Privat
 	return result, nil
 }
 
-func keyTypeExtension(key crypto.PrivateKey) string {
+func keyTypeExtension(key crypto.PrivateKey) (string, error) {
 	switch key.(type) {
 	case *rsa.PrivateKey:
-		return "RSA"
+		return "RSA", nil
 	case *ecdsa.PrivateKey:
-		return "EC"
+		return "EC", nil
 	default:
-		return "RSA"
+		return "", fmt.Errorf("unsupported key type %T", key)
 	}
 }
