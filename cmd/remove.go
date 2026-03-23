@@ -31,9 +31,17 @@ var removeCmd = &cobra.Command{
 			app := idx.Apps[appIdx]
 
 			if !keepFiles {
-				os.Remove(filepath.Join(repoPath, "icons", app.Icon))
+				if app.Icon != "" {
+					iconPath := filepath.Join(repoPath, "icons", app.Icon)
+					if err := os.Remove(iconPath); err != nil && !os.IsNotExist(err) {
+						fmt.Printf("Warning: failed to remove icon %s: %v\n", app.Icon, err)
+					}
+				}
 				for _, pkg := range idx.Packages[app.PackageName] {
-					os.Remove(filepath.Join(repoPath, pkg.APKName))
+					apkPath := filepath.Join(repoPath, pkg.APKName)
+					if err := os.Remove(apkPath); err != nil && !os.IsNotExist(err) {
+						fmt.Printf("Warning: failed to remove APK %s: %v\n", pkg.APKName, err)
+					}
 				}
 			}
 

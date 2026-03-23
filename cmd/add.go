@@ -48,15 +48,22 @@ var addCmd = &cobra.Command{
 	},
 }
 
+// maxConcurrentFetches limits parallel API requests to avoid overwhelming the server.
+const maxConcurrentFetches = 4
+
 func prefetchMetadata(packageIDs []string) map[string]prefetchResult {
 	results := make(map[string]prefetchResult, len(packageIDs))
 	var mu sync.Mutex
 	var wg sync.WaitGroup
+	sem := make(chan struct{}, maxConcurrentFetches)
 
 	for _, pkg := range packageIDs {
 		wg.Add(1)
 		go func(id string) {
 			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
 			info, err := internal.FetchAppInfo(id)
 			if err != nil {
 				mu.Lock()
@@ -85,13 +92,14 @@ func addPackage(idx *internal.IndexV1, packageID string) error {
 }
 
 func addPackageWithMeta(idx *internal.IndexV1, info *internal.AppInfo, dlInfo *internal.DownloadBody) error {
-	if info.PackageName == "" {
-		return fmt.Errorf("empty package name in app info")
+	if err := internal.ValidatePackageName(info.PackageName); err != nil {
+		return err
 	}
 	var err error
 	var iconFile string
 	if info.IconURL != "" {
-		iconOutput := filepath.Join(repoPath, "icons", info.PackageName+".icon.jpg")
+		iconExt := iconExtFromURL(info.IconURL)
+		iconOutput := filepath.Join(repoPath, "icons", info.PackageName+iconExt)
 		iconFile, _, err = internal.DownloadAndGetSHA256(info.IconURL, iconOutput, 0)
 		if err != nil {
 			fmt.Printf("Warning: failed to download icon: %v\n", err)
@@ -191,7 +199,33 @@ func addPackageWithMeta(idx *internal.IndexV1, info *internal.AppInfo, dlInfo *i
 		idx.Packages[info.PackageName] = []internal.Package{indexPkg}
 	}
 
+	// Backfill missing permissions from existing APKs on disk
+	for i, pkg := range idx.Packages[info.PackageName] {
+		if pkg.UsesPermission != nil {
+			continue
+		}
+		apkFile := filepath.Join(repoPath, pkg.APKName)
+		perms, err := internal.ExtractPermissions(apkFile)
+		if err != nil {
+			fmt.Printf("Warning: failed to extract permissions from %s: %v\n", pkg.APKName, err)
+			continue
+		}
+		idx.Packages[info.PackageName][i].UsesPermission = perms
+	}
+
 	return nil
+}
+
+// iconExtFromURL extracts a file extension from the icon URL path.
+// Falls back to ".png" if the URL has no recognizable image extension.
+func iconExtFromURL(rawURL string) string {
+	ext := filepath.Ext(rawURL)
+	switch ext {
+	case ".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg":
+		return ext
+	default:
+		return ".png"
+	}
 }
 
 func init() {
