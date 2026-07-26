@@ -1,131 +1,116 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23d97706'/%3E%3Cpath d='M19 20h26v7H27v8h15v7H27v12h-8z' fill='white'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%234f7042'/%3E%3Cpath d='M19 20h26v7H27v8h15v7H27v12h-8z' fill='%23fdf6e3'/%3E%3C/svg%3E">
+<script>
+  const storedTheme = localStorage.getItem("theme");
+  document.documentElement.dataset.theme = storedTheme ||
+    (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+</script>
 <title>F-Droid Repository</title>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
   :root {
-    --bg: #faf9f7;
-    --bg-card: #ffffff;
-    --bg-card-hover: #fffefb;
-    --bg-modal: rgba(26, 26, 26, 0.45);
-    --accent: #d97706;
-    --accent-light: #fef3c7;
-    --accent-hover: #b45309;
-    --text: #1a1a1a;
-    --text-secondary: #6b7280;
-    --text-tertiary: #9ca3af;
-    --border: #e5e2dd;
-    --border-light: #f0eeea;
-    --orange: #ea580c;
-    --orange-bg: #fff7ed;
-    --radius: 12px;
-    --radius-sm: 8px;
-    --radius-xs: 6px;
-    --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.04);
-    --shadow-lg: 0 4px 12px rgba(0,0,0,0.06), 0 12px 28px rgba(0,0,0,0.08);
-    --font: "Google Sans", sans-serif;
-    --font-heading: "Poppins", sans-serif;
-    --transition: 180ms ease;
+    --bg: #efebd4;
+    --bg-card: #fdf6e3;
+    --bg-card-hover: #f4f0d9;
+    --bg-modal: rgba(60, 70, 72, 0.5);
+    --accent: #4f7042;
+    --accent-hover: #3d5b34;
+    --accent-contrast: #fdf6e3;
+    --text: #4f5f66;
+    --text-secondary: #5c6a72;
+    --text-tertiary: #5f6d67;
+    --border: #d2cdb5;
+    --border-light: #e2ddc7;
+    --warning: #a34f32;
+    --radius: 6px;
+    --radius-sm: 4px;
+    --radius-xs: 2px;
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.18);
+    --font: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --transition: 160ms ease;
   }
 
   [data-theme="dark"] {
-    --bg: #18181b;
-    --bg-card: #27272a;
-    --bg-card-hover: #2d2d31;
-    --bg-modal: rgba(0, 0, 0, 0.6);
-    --accent: #f59e0b;
-    --accent-light: #422006;
-    --accent-hover: #d97706;
-    --text: #f4f4f5;
-    --text-secondary: #a1a1aa;
-    --text-tertiary: #71717a;
-    --border: #3f3f46;
-    --border-light: #2e2e33;
-    --orange: #fb923c;
-    --orange-bg: #431407;
-    --shadow: 0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.15);
-    --shadow-lg: 0 4px 12px rgba(0,0,0,0.25), 0 12px 28px rgba(0,0,0,0.3);
+    --bg: #272e33;
+    --bg-card: #2e383c;
+    --bg-card-hover: #374145;
+    --bg-modal: rgba(30, 35, 38, 0.78);
+    --accent: #a7c080;
+    --accent-hover: #b8cf91;
+    --accent-contrast: #272e33;
+    --text: #d3c6aa;
+    --text-secondary: #b5bbaa;
+    --text-tertiary: #9da9a0;
+    --border: #4f5b58;
+    --border-light: #414b50;
+    --warning: #e69875;
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.42);
   }
 
   html { font-size: 16px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
   body {
     font-family: var(--font);
-    font-weight: 450;
+    font-weight: 400;
     background: var(--bg);
     color: var(--text);
     line-height: 1.55;
     min-height: 100vh;
   }
 
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 9999;
-    opacity: 0.018;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size: 200px;
+  button, input { font: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
   }
 
   .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 
   /* ── Header ── */
-  .header { padding: 48px 0 40px; border-bottom: 1px solid var(--border); }
+  .header { padding: 56px 0 32px; border-bottom: 1px solid var(--border); }
   .header h1 {
-    font-family: var(--font-heading);
-    font-size: 1.75rem; font-weight: 700;
-    letter-spacing: -0.02em; line-height: 1.2;
+    font-size: 2rem; font-weight: 700;
+    letter-spacing: -0.025em; line-height: 1.15;
   }
   .header .description {
-    margin-top: 6px; font-size: 0.95rem;
-    color: var(--text-secondary); max-width: 520px;
+    margin-top: 8px; font-size: 1rem;
+    color: var(--text-secondary); max-width: 640px;
   }
-  .header-meta { display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap; }
+  .header-meta { display: flex; margin-top: 20px; flex-wrap: wrap; }
   .meta-chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 0.8rem; color: var(--text-tertiary); letter-spacing: 0.01em;
+    font-size: 0.8rem; color: var(--text-tertiary);
   }
-  .meta-chip svg { flex-shrink: 0; }
+  .meta-chip + .meta-chip { margin-left: 10px; padding-left: 10px; border-left: 1px solid var(--border); }
 
   /* ── Repository onboarding ── */
   .onboarding {
-    margin-top: 28px; display: grid; grid-template-columns: 1fr auto;
-    gap: 24px; align-items: center; padding: 20px;
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: var(--radius); box-shadow: var(--shadow);
+    margin-top: 32px; display: grid; grid-template-columns: 1fr auto;
+    gap: 32px; align-items: center; padding-top: 24px;
+    border-top: 1px solid var(--border);
   }
   .onboarding[hidden] { display: none; }
-  .onboarding-eyebrow {
-    font-family: var(--font-heading); font-size: 0.7rem; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent);
-  }
   .onboarding-title {
-    margin-top: 4px; font-family: var(--font-heading); font-size: 1.05rem;
-    font-weight: 650; letter-spacing: -0.015em;
+    font-size: 1.2rem; font-weight: 650; letter-spacing: -0.015em;
   }
-  .onboarding-copy { margin-top: 6px; color: var(--text-secondary); font-size: 0.84rem; max-width: 680px; }
+  .onboarding-copy { margin-top: 6px; color: var(--text-secondary); font-size: 0.9rem; max-width: 680px; }
   .onboarding-actions { display: flex; align-items: center; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
   .add-repo-btn {
-    display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px;
-    border-radius: var(--radius-sm); background: var(--accent); color: #fff;
-    font-size: 0.82rem; font-weight: 600; text-decoration: none;
-    transition: background var(--transition), transform var(--transition);
+    display: inline-flex; align-items: center; padding: 9px 14px;
+    border-radius: var(--radius-sm); background: var(--accent); color: var(--accent-contrast);
+    font-size: 0.84rem; font-weight: 650; text-decoration: none;
+    transition: background var(--transition);
   }
-  .add-repo-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+  .add-repo-btn:hover { background: var(--accent-hover); }
   .copy-fingerprint {
-    border: 1px solid var(--border); background: var(--bg); color: var(--text-secondary);
+    border: 1px solid var(--border); background: transparent; color: var(--text-secondary);
     border-radius: var(--radius-sm); padding: 8px 11px; font-family: var(--font);
-    font-size: 0.76rem; cursor: pointer; transition: color var(--transition), border-color var(--transition);
+    font-size: 0.8rem; cursor: pointer; transition: color var(--transition), border-color var(--transition);
   }
   .copy-fingerprint:hover { color: var(--accent); border-color: var(--accent); }
   .fingerprint {
@@ -155,7 +140,7 @@
   .search-box input::placeholder { color: var(--text-tertiary); }
   .search-box input:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
   }
   .app-count {
     font-size: 0.82rem; color: var(--text-tertiary);
@@ -165,32 +150,20 @@
   /* ── Grid ── */
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 16px; padding-bottom: 64px;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1px; margin-bottom: 64px; overflow: hidden;
+    background: var(--border); border: 1px solid var(--border);
+    border-radius: var(--radius);
   }
 
   /* ── Card ── */
   .card {
-    background: var(--bg-card); border: 1px solid var(--border-light);
-    border-radius: var(--radius); padding: 20px;
-    cursor: pointer; transition: all var(--transition);
-    position: relative; overflow: hidden;
-    animation: card-in 0.35s ease both;
+    width: 100%; min-height: 176px; padding: 20px;
+    background: var(--bg-card); border: 0; border-radius: 0;
+    color: var(--text); text-align: left; cursor: pointer;
+    transition: background var(--transition);
   }
-  .card::after {
-    content: ""; position: absolute; inset: 0;
-    border-radius: var(--radius); box-shadow: var(--shadow);
-    opacity: 0; transition: opacity var(--transition); pointer-events: none;
-  }
-  .card:hover {
-    border-color: var(--border); background: var(--bg-card-hover);
-    transform: translateY(-1px);
-  }
-  .card:hover::after { opacity: 1; }
-  @keyframes card-in {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+  .card:hover { background: var(--bg-card-hover); }
 
   .card-head { display: flex; gap: 14px; align-items: flex-start; }
   .card-icon {
@@ -199,13 +172,13 @@
   }
   .card-icon-placeholder {
     width: 48px; height: 48px; border-radius: var(--radius-sm);
-    background: var(--accent-light); display: flex;
+    background: var(--bg); border: 1px solid var(--border); display: flex;
     align-items: center; justify-content: center; flex-shrink: 0;
-    font-size: 1.1rem; font-weight: 700; color: var(--accent);
+    font-size: 1.1rem; font-weight: 700; color: var(--text-secondary);
   }
   .card-info { flex: 1; min-width: 0; }
-  .card-title { font-family: var(--font-heading); font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; }
-  .card-author { font-size: 0.78rem; color: var(--text-tertiary); margin-top: 1px; }
+  .card-title { display: block; font-size: 1rem; font-weight: 650; letter-spacing: -0.01em; line-height: 1.3; }
+  .card-author { display: block; font-size: 0.78rem; color: var(--text-tertiary); margin-top: 1px; }
   .card-summary {
     margin-top: 10px; font-size: 0.85rem; color: var(--text-secondary);
     line-height: 1.5; display: -webkit-box;
@@ -215,12 +188,7 @@
     margin-top: 14px; display: flex; align-items: center;
     justify-content: space-between; gap: 8px; flex-wrap: wrap;
   }
-  .card-tags { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; min-width: 0; }
-  .tag {
-    display: inline-block; padding: 3px 9px; border-radius: 100px;
-    font-size: 0.7rem; font-weight: 500; letter-spacing: 0.02em;
-    background: var(--border-light); color: var(--text-secondary); white-space: nowrap;
-  }
+  .card-categories { flex: 1; min-width: 0; font-size: 0.75rem; color: var(--text-tertiary); }
   .card-version {
     font-size: 0.75rem; color: var(--text-tertiary);
     font-variant-numeric: tabular-nums; white-space: nowrap;
@@ -229,30 +197,26 @@
   /* ── Modal ── */
   .modal-overlay {
     position: fixed; inset: 0; background: var(--bg-modal);
-    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
     z-index: 1000; display: none; align-items: flex-start;
     justify-content: center; padding: 40px 20px; overflow-y: auto;
-    opacity: 0; transition: opacity 0.2s ease;
+    opacity: 0; transition: opacity var(--transition);
   }
   .modal-overlay.visible { opacity: 1; }
   .modal-overlay.closing { opacity: 0; }
 
   .modal {
-    background: var(--bg-card); border-radius: 16px;
+    background: var(--bg-card); border-radius: var(--radius);
     box-shadow: var(--shadow-lg); width: 100%; max-width: 640px;
-    position: relative; transform: translateY(12px) scale(0.98);
-    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    overflow: hidden;
+    position: relative; overflow: hidden;
   }
-  .modal-overlay.visible .modal { transform: translateY(0) scale(1); }
 
   .modal-close {
     position: absolute; top: 16px; right: 16px;
     width: 36px; height: 36px; display: flex;
     align-items: center; justify-content: center;
-    border: none; background: var(--bg); border-radius: 50%;
+    border: 1px solid var(--border); background: var(--bg-card); border-radius: var(--radius-sm);
     cursor: pointer; color: var(--text-secondary);
-    transition: all var(--transition); z-index: 2;
+    transition: color var(--transition), background var(--transition); z-index: 2;
   }
   .modal-close:hover { background: var(--border-light); color: var(--text); }
 
@@ -263,11 +227,11 @@
   }
   .modal-icon-placeholder {
     width: 64px; height: 64px; border-radius: var(--radius);
-    background: var(--accent-light); display: flex;
+    background: var(--bg); border: 1px solid var(--border); display: flex;
     align-items: center; justify-content: center; flex-shrink: 0;
-    font-size: 1.5rem; font-weight: 700; color: var(--accent);
+    font-size: 1.5rem; font-weight: 700; color: var(--text-secondary);
   }
-  .modal-title { font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; line-height: 1.25; }
+  .modal-title { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.015em; line-height: 1.25; padding-right: 40px; }
   .modal-pkg {
     font-size: 0.78rem; color: var(--text-tertiary); margin-top: 3px;
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
@@ -278,10 +242,10 @@
   .modal-body { padding: 0 28px 28px; }
   .modal-section { margin-top: 20px; }
   .modal-section:first-child { margin-top: 0; }
+  .modal-section + .modal-section { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-light); }
   .modal-section-title {
-    font-family: var(--font-heading); font-size: 0.72rem; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.08em;
-    color: var(--text-tertiary); margin-bottom: 8px;
+    font-size: 1rem; font-weight: 650;
+    color: var(--text); margin-bottom: 9px;
   }
 
   .modal-description {
@@ -300,21 +264,22 @@
   }
   .show-more-btn:hover { text-decoration: underline; }
 
-  .meta-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
-  .meta-item { background: var(--bg); border-radius: var(--radius-xs); padding: 10px 12px; }
+  .meta-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--border-light); }
+  .meta-item { padding: 10px 0; border-bottom: 1px solid var(--border-light); }
+  .meta-item:nth-child(odd) { padding-right: 12px; }
+  .meta-item:nth-child(even) { padding-left: 12px; }
   .meta-label {
-    font-size: 0.68rem; font-weight: 500; text-transform: uppercase;
-    letter-spacing: 0.06em; color: var(--text-tertiary); margin-bottom: 3px;
+    font-size: 0.75rem; font-weight: 500;
+    color: var(--text-tertiary); margin-bottom: 2px;
   }
   .meta-value { font-size: 0.88rem; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
 
-  .anti-features { display: flex; gap: 6px; flex-wrap: wrap; }
+  .anti-features { display: flex; gap: 5px 14px; flex-wrap: wrap; }
   .anti-feature-tag {
     display: inline-flex; align-items: center; gap: 4px;
-    padding: 4px 10px; border-radius: 100px; font-size: 0.72rem;
-    font-weight: 500; background: var(--orange-bg); color: var(--orange);
+    font-size: 0.8rem; font-weight: 550; color: var(--warning);
   }
-  .modal-categories { display: flex; gap: 6px; flex-wrap: wrap; }
+  .modal-categories { color: var(--text-secondary); font-size: 0.88rem; }
   .contact-links { display: flex; gap: 8px; flex-wrap: wrap; }
   .contact-link {
     display: inline-flex; align-items: center; gap: 5px; color: var(--accent);
@@ -331,18 +296,17 @@
   .screenshot {
     display: block; width: 100%; aspect-ratio: 9 / 16; object-fit: cover;
     border: 1px solid var(--border); border-radius: var(--radius-sm);
-    transition: transform var(--transition), border-color var(--transition);
+    transition: border-color var(--transition);
   }
-  .screenshot:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .screenshot:hover { border-color: var(--accent); }
 
   /* ── Version list ── */
-  .version-list { display: flex; flex-direction: column; gap: 8px; }
+  .version-list { display: flex; flex-direction: column; border-top: 1px solid var(--border-light); }
   .version-row {
     display: flex; align-items: center; gap: 12px;
-    padding: 12px 14px; background: var(--bg);
-    border-radius: var(--radius-xs); flex-wrap: wrap;
+    padding: 12px 0; border-bottom: 1px solid var(--border-light); flex-wrap: wrap;
   }
-  .version-name { font-family: var(--font-heading); font-size: 0.88rem; font-weight: 600; min-width: 80px; }
+  .version-name { font-size: 0.88rem; font-weight: 600; min-width: 80px; }
   .version-code {
     font-size: 0.75rem; color: var(--text-tertiary);
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
@@ -350,31 +314,18 @@
   .version-size { font-size: 0.78rem; color: var(--text-secondary); margin-left: auto; }
   .version-download {
     display: inline-flex; align-items: center; gap: 5px;
-    padding: 5px 12px; border-radius: 100px; font-size: 0.75rem;
-    font-weight: 500; background: var(--accent); color: #fff;
+    padding: 5px 10px; border-radius: var(--radius-sm); font-size: 0.75rem;
+    font-weight: 600; background: var(--accent); color: var(--accent-contrast);
     text-decoration: none; transition: background var(--transition);
   }
   .version-download:hover { background: var(--accent-hover); }
   .version-sdk { font-size: 0.72rem; color: var(--text-tertiary); width: 100%; margin-top: -2px; }
 
-  /* ── Empty / skeleton ── */
-  .empty { grid-column: 1 / -1; text-align: center; padding: 80px 20px; }
+  /* ── Empty state ── */
+  .empty { grid-column: 1 / -1; text-align: center; padding: 80px 20px; background: var(--bg-card); }
   .empty-icon { width: 48px; height: 48px; margin: 0 auto 16px; color: var(--text-tertiary); opacity: 0.5; }
   .empty-title { font-size: 1rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
   .empty-text { font-size: 0.85rem; color: var(--text-tertiary); }
-
-  .skeleton-card { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 20px; }
-  .skeleton-line { height: 12px; background: var(--border-light); border-radius: 6px; animation: shimmer 1.5s ease infinite; }
-  .skeleton-line.w60 { width: 60%; }
-  .skeleton-line.w80 { width: 80%; }
-  .skeleton-line.w40 { width: 40%; }
-  .skeleton-head { display: flex; gap: 14px; margin-bottom: 14px; }
-  .skeleton-avatar {
-    width: 48px; height: 48px; border-radius: var(--radius-sm);
-    background: var(--border-light); flex-shrink: 0; animation: shimmer 1.5s ease infinite;
-  }
-  .skeleton-lines { display: flex; flex-direction: column; gap: 8px; flex: 1; padding-top: 4px; }
-  @keyframes shimmer { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
 
   /* ── Theme toggle ── */
   .theme-toggle {
@@ -382,7 +333,7 @@
     align-items: center; justify-content: center;
     border: 1px solid var(--border); border-radius: var(--radius-sm);
     background: var(--bg-card); color: var(--text-secondary);
-    cursor: pointer; transition: all var(--transition); flex-shrink: 0;
+    cursor: pointer; transition: color var(--transition), border-color var(--transition), background var(--transition); flex-shrink: 0;
   }
   .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
   .theme-toggle .icon-sun, .theme-toggle .icon-moon { display: none; }
@@ -391,10 +342,14 @@
   [data-theme="light"] .theme-toggle .icon-moon { display: block; }
   [data-theme="light"] .theme-toggle .icon-sun { display: none; }
 
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+  }
+
   /* ── Responsive ── */
   @media (max-width: 640px) {
     .header { padding: 32px 0 28px; }
-    .header h1 { font-size: 1.35rem; }
+    .header h1 { font-size: 1.7rem; }
     .grid { grid-template-columns: 1fr; }
     .modal-overlay { padding: 20px 12px; }
     .modal-header { padding: 20px 20px 16px; }
@@ -402,7 +357,7 @@
     .toolbar { gap: 8px; }
     .app-count { margin-left: 0; width: 100%; }
     .onboarding { grid-template-columns: 1fr; }
-    .repo-qr { width: 104px; height: 104px; grid-row: 1; }
+    .repo-qr { width: 104px; height: 104px; }
     .screenshot-strip { grid-auto-columns: 58%; }
   }
 </style>
@@ -418,15 +373,11 @@
     <div class="header-meta" id="header-meta"></div>
     <section class="onboarding" id="onboarding" hidden>
       <div>
-        <div class="onboarding-eyebrow">Verified repository</div>
-        <div class="onboarding-title">Add this catalog to F-Droid</div>
-        <p class="onboarding-copy">Open the signed repository link on Android or scan the QR code. The SHA-256 certificate fingerprint is included automatically.</p>
+        <h2 class="onboarding-title">Add the signed repository</h2>
+        <p class="onboarding-copy">Open the link on Android or scan the QR code. F-Droid receives the SHA-256 certificate fingerprint with the repository address.</p>
         <div class="onboarding-actions">
-          <a class="add-repo-btn" id="add-repo-link" href="#">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-            Add to F-Droid
-          </a>
-          <button class="copy-fingerprint" id="copy-fingerprint" type="button">Copy fingerprint</button>
+          <a class="add-repo-btn" id="add-repo-link" href="#">Add to F-Droid</a>
+          <button class="copy-fingerprint" id="copy-fingerprint" type="button" aria-live="polite">Copy fingerprint</button>
         </div>
         <code class="fingerprint" id="repo-fingerprint"></code>
       </div>
@@ -434,37 +385,34 @@
     </section>
   </header>
 
-  <div class="toolbar">
-    <div class="search-box">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-      <input type="text" id="search" placeholder="Search apps..." autocomplete="off" spellcheck="false">
+  <main>
+    <div class="toolbar">
+      <div class="search-box">
+        <label class="sr-only" for="search">Search apps</label>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="search" id="search" placeholder="Search apps..." autocomplete="off" spellcheck="false">
+      </div>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark theme">
+        <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+      <span class="app-count" id="app-count" aria-live="polite"></span>
     </div>
-    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
-      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-      <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-    </button>
-    <span class="app-count" id="app-count"></span>
-  </div>
-
-  <div class="grid" id="grid"></div>
+    <div class="grid" id="grid"></div>
+  </main>
 </div>
 
 <div class="modal-overlay" id="modal-overlay">
-  <div class="modal" id="modal"></div>
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-desc"></div>
 </div>
 
 <script>
 (function() {
   "use strict";
 
-  // ── Theme ──
-  const saved = localStorage.getItem("theme");
-  if (saved) document.documentElement.setAttribute("data-theme", saved);
-  else if (window.matchMedia("(prefers-color-scheme: dark)").matches)
-    document.documentElement.setAttribute("data-theme", "dark");
-
   let indexData = null;
   let repoInfo = null;
+  let lastFocusedElement = null;
   const $ = (s) => document.querySelector(s);
   const grid = $("#grid");
   const overlay = $("#modal-overlay");
@@ -516,31 +464,21 @@
 
   function installIconFallback(img, placeholderClass) {
     img.addEventListener("error", () => {
-      const placeholder = document.createElement("div");
+      const placeholder = document.createElement("span");
       placeholder.className = placeholderClass;
       placeholder.textContent = img.dataset.initial || "?";
       img.replaceWith(placeholder);
     }, { once: true });
   }
 
-  function truncate(str, len) {
-    if (!str) return "";
-    return str.length > len ? str.slice(0, len) + "\u2026" : str;
-  }
-
-  function showSkeleton() {
-    let h = "";
-    for (let i = 0; i < 6; i++) {
-      h += `<div class="skeleton-card" style="animation-delay:${i * 60}ms">
-        <div class="skeleton-head"><div class="skeleton-avatar"></div>
-        <div class="skeleton-lines"><div class="skeleton-line w60"></div><div class="skeleton-line w40"></div></div></div>
-        <div class="skeleton-line w80" style="margin-top:10px"></div></div>`;
-    }
-    grid.innerHTML = h;
+  function showLoading() {
+    grid.innerHTML = `<div class="empty">
+      <div class="empty-title">Loading repository</div>
+    </div>`;
   }
 
   async function loadIndex() {
-    showSkeleton();
+    showLoading();
     try {
       const [r, infoResponse] = await Promise.all([
         fetch("index-v1.json"),
@@ -579,12 +517,9 @@
     $("#repo-desc").textContent = repo.description || "";
     let m = "";
     if (repo.timestamp)
-      m += `<span class="meta-chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Updated ${formatDate(repo.timestamp)}</span>`;
-    m += `<span class="meta-chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>${indexData.apps.length} app${indexData.apps.length !== 1 ? "s" : ""}</span>`;
-    if (repo.version)
-      m += `<span class="meta-chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>Schema ${repo.version}</span>`;
-    if (repo.address)
-      m += `<span class="meta-chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>${esc(truncate(repo.address, 40))}</span>`;
+      m += `<span class="meta-chip">Updated ${formatDate(repo.timestamp)}</span>`;
+    m += `<span class="meta-chip">${indexData.apps.length} app${indexData.apps.length !== 1 ? "s" : ""}</span>`;
+    m += `<span class="meta-chip">F-Droid index v1 + v2</span>`;
     $("#header-meta").innerHTML = m;
   }
 
@@ -599,27 +534,27 @@
     }
     updateAppCount(apps.length);
     let h = "";
-    apps.forEach((app, i) => {
+    apps.forEach(app => {
       const iconSrc = app.icon ? `icons/${app.icon}` : "";
       const initial = (app.name || app.packageName || "?")[0].toUpperCase();
       const iconHtml = iconSrc
         ? `<img class="card-icon" src="${esc(iconSrc)}" alt="" loading="lazy" data-initial="${esc(initial)}">`
-        : `<div class="card-icon-placeholder">${esc(initial)}</div>`;
-      const cats = (app.categories || []).slice(0, 3).map(c => `<span class="tag">${esc(c)}</span>`).join("");
+        : `<span class="card-icon-placeholder">${esc(initial)}</span>`;
+      const cats = (app.categories || []).slice(0, 3).map(esc).join(" / ");
 
-      h += `<div class="card" data-pkg="${esc(app.packageName)}" style="animation-delay:${Math.min(i * 40, 400)}ms">
-        <div class="card-head">${iconHtml}
-          <div class="card-info">
-            <div class="card-title">${esc(app.name || app.packageName)}</div>
-            <div class="card-author">${esc(app.authorName || "")}</div>
-          </div>
-        </div>
-        <div class="card-summary">${esc(app.summary || "")}</div>
-        <div class="card-footer">
-          <div class="card-tags">${cats}</div>
+      h += `<button class="card" type="button" data-pkg="${esc(app.packageName)}" aria-label="View ${esc(app.name || app.packageName)}">
+        <span class="card-head">${iconHtml}
+          <span class="card-info">
+            <span class="card-title">${esc(app.name || app.packageName)}</span>
+            <span class="card-author">${esc(app.authorName || "")}</span>
+          </span>
+        </span>
+        <span class="card-summary">${esc(app.summary || "")}</span>
+        <span class="card-footer">
+          <span class="card-categories">${cats}</span>
           <span class="card-version">v${esc(app.suggestedVersionName || "?")}</span>
-        </div>
-      </div>`;
+        </span>
+      </button>`;
     });
     grid.innerHTML = h;
     grid.querySelectorAll("img.card-icon").forEach(img => installIconFallback(img, "card-icon-placeholder"));
@@ -657,13 +592,14 @@
   function openModal(pkg, updateURL) {
     const app = indexData.apps.find(a => a.packageName === pkg);
     if (!app) return;
-    const pkgs = (indexData.packages[pkg] || []).sort((a, b) => b.versionCode - a.versionCode);
+    const pkgs = [...(indexData.packages[pkg] || [])].sort((a, b) => b.versionCode - a.versionCode);
+    lastFocusedElement = document.activeElement;
 
     const iconSrc = app.icon ? `icons/${app.icon}` : "";
     const initial = (app.name || app.packageName || "?")[0].toUpperCase();
     const iconHtml = iconSrc
       ? `<img class="modal-icon" src="${esc(iconSrc)}" alt="" data-initial="${esc(initial)}">`
-      : `<div class="modal-icon-placeholder">${esc(initial)}</div>`;
+      : `<span class="modal-icon-placeholder">${esc(initial)}</span>`;
 
     const desc = esc(app.description || app.summary || "No description available.");
     const longDesc = (app.description || "").length > 250;
@@ -677,30 +613,30 @@
     let antiHtml = "";
     if (app.antiFeatures && app.antiFeatures.length) {
       antiHtml = `<div class="modal-section">
-        <div class="modal-section-title">Anti-Features</div>
+        <h3 class="modal-section-title">Anti-Features</h3>
         <div class="anti-features">${app.antiFeatures.map(f =>
-          `<span class="anti-feature-tag"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 9v4M12 17h.01"/></svg>${esc(f)}</span>`
+          `<span class="anti-feature-tag"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/></svg>${esc(f)}</span>`
         ).join("")}</div></div>`;
     }
 
     let catHtml = "";
     if (app.categories && app.categories.length) {
       catHtml = `<div class="modal-section">
-        <div class="modal-section-title">Categories</div>
-        <div class="modal-categories">${app.categories.map(c => `<span class="tag">${esc(c)}</span>`).join("")}</div></div>`;
+        <h3 class="modal-section-title">Categories</h3>
+        <div class="modal-categories">${app.categories.map(esc).join(" / ")}</div></div>`;
     }
 
     let versionsHtml = "";
     if (pkgs.length) {
       versionsHtml = `<div class="modal-section">
-        <div class="modal-section-title">Versions</div>
+        <h3 class="modal-section-title">Versions</h3>
         <div class="version-list">${pkgs.map(p => `
           <div class="version-row">
             <span class="version-name">v${esc(p.versionName)}</span>
             <span class="version-code">#${p.versionCode}</span>
             <span class="version-size">${formatSize(p.size)}</span>
             <a class="version-download" href="${esc(p.apkName)}" onclick="event.stopPropagation()">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
               APK</a>
             <span class="version-sdk">SDK ${p.minSdkVersion}\u2013${p.targetSdkVersion}</span>
           </div>`).join("")}
@@ -711,7 +647,7 @@
     let whatsNewHtml = "";
     if (latest && latest.whatsNew) {
       whatsNewHtml = `<div class="modal-section">
-        <div class="modal-section-title">What's new</div>
+        <h3 class="modal-section-title">What's new</h3>
         <div class="modal-description">${esc(latest.whatsNew)}</div></div>`;
     }
 
@@ -719,7 +655,7 @@
     const screenshots = getPhoneScreenshots(app);
     if (screenshots.length) {
       screenshotsHtml = `<div class="modal-section">
-        <div class="modal-section-title">Screenshots</div>
+        <h3 class="modal-section-title">Screenshots</h3>
         <div class="screenshot-strip">${screenshots.map((file, index) => `
           <a class="screenshot-link" href="${esc(file.name)}" target="_blank" rel="noopener">
             <img class="screenshot" src="${esc(file.name)}" alt="${esc(app.name || app.packageName)} screenshot ${index + 1}" loading="lazy">
@@ -730,7 +666,7 @@
     let contactsHtml = "";
     if (app.authorEmail || website) {
       contactsHtml = `<div class="modal-section">
-        <div class="modal-section-title">Developer</div>
+        <h3 class="modal-section-title">Developer</h3>
         <div class="contact-links">
           ${app.authorEmail ? `<a class="contact-link" href="mailto:${encodeURIComponent(app.authorEmail)}">${esc(app.authorEmail)}</a>` : ""}
           ${website ? `<a class="contact-link" href="${esc(website)}" target="_blank" rel="noopener">Website</a>` : ""}
@@ -738,31 +674,31 @@
     }
 
     $("#modal").innerHTML = `
-      <button class="modal-close" aria-label="Close">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      <button class="modal-close" type="button" aria-label="Close app details">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
       <div class="modal-header">
         ${iconHtml}
         <div>
-          <div class="modal-title">${esc(app.name || app.packageName)}</div>
+          <h2 class="modal-title" id="modal-title">${esc(app.name || app.packageName)}</h2>
           <div class="modal-pkg">${esc(app.packageName)}</div>
           <div class="modal-author">${esc(app.authorName || "Unknown author")}</div>
         </div>
       </div>
       <div class="modal-body">
         <div class="modal-section">
-          <div class="modal-section-title">About</div>
+          <h3 class="modal-section-title">About</h3>
           <div class="modal-description${longDesc ? " clamped" : ""}" id="modal-desc">${desc}</div>
-          ${longDesc ? `<button class="show-more-btn" id="show-more">Show more</button>` : ""}
+          ${longDesc ? `<button class="show-more-btn" id="show-more" type="button">Show more</button>` : ""}
         </div>
         <div class="modal-section">
-          <div class="modal-section-title">Details</div>
-          <div class="meta-grid">
-            <div class="meta-item"><div class="meta-label">Version</div><div class="meta-value">v${esc(app.suggestedVersionName || "?")}</div></div>
-            <div class="meta-item"><div class="meta-label">License</div><div class="meta-value">${esc(app.license || "Unknown")}</div></div>
-            <div class="meta-item"><div class="meta-label">Added</div><div class="meta-value">${formatDate(app.added)}</div></div>
-            <div class="meta-item"><div class="meta-label">Updated</div><div class="meta-value">${formatDate(app.lastUpdated)}</div></div>
-          </div>
+          <h3 class="modal-section-title">Details</h3>
+          <dl class="meta-grid">
+            <div class="meta-item"><dt class="meta-label">Version</dt><dd class="meta-value">v${esc(app.suggestedVersionName || "?")}</dd></div>
+            <div class="meta-item"><dt class="meta-label">License</dt><dd class="meta-value">${esc(app.license || "Unknown")}</dd></div>
+            <div class="meta-item"><dt class="meta-label">Added</dt><dd class="meta-value">${formatDate(app.added)}</dd></div>
+            <div class="meta-item"><dt class="meta-label">Updated</dt><dd class="meta-value">${formatDate(app.lastUpdated)}</dd></div>
+          </dl>
         </div>
         ${whatsNewHtml}${screenshotsHtml}${contactsHtml}${catHtml}${antiHtml}${versionsHtml}
       </div>`;
@@ -770,7 +706,10 @@
     overlay.style.display = "flex";
     const modalIcon = overlay.querySelector("img.modal-icon");
     if (modalIcon) installIconFallback(modalIcon, "modal-icon-placeholder");
-    requestAnimationFrame(() => overlay.classList.add("visible"));
+    requestAnimationFrame(() => {
+      overlay.classList.add("visible");
+      overlay.querySelector(".modal-close").focus();
+    });
     document.body.style.overflow = "hidden";
 
     overlay.querySelector(".modal-close").addEventListener("click", closeModal);
@@ -782,24 +721,55 @@
   }
 
   function closeModal() {
+    if (!overlay.classList.contains("visible")) return;
     overlay.classList.remove("visible");
     overlay.classList.add("closing");
     document.body.style.overflow = "";
     const nextURL = new URL(location.href);
     nextURL.searchParams.delete("package");
     history.replaceState(null, "", nextURL);
-    setTimeout(() => { overlay.style.display = "none"; overlay.classList.remove("closing"); }, 220);
+    setTimeout(() => {
+      overlay.style.display = "none";
+      overlay.classList.remove("closing");
+      if (lastFocusedElement && document.contains(lastFocusedElement)) lastFocusedElement.focus();
+      lastFocusedElement = null;
+    }, 180);
   }
 
   overlay.addEventListener("click", (e) => { if (e.target === overlay) closeModal(); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && overlay.classList.contains("visible")) closeModal(); });
+  document.addEventListener("keydown", (e) => {
+    if (!overlay.classList.contains("visible")) return;
+    if (e.key === "Escape") {
+      closeModal();
+      return;
+    }
+    if (e.key !== "Tab") return;
+    const focusable = [...overlay.querySelectorAll("a[href], button:not([disabled])")];
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  });
 
   // ── Theme toggle ──
-  $("#theme-toggle").addEventListener("click", () => {
+  const themeToggle = $("#theme-toggle");
+  function updateThemeToggle() {
+    const dark = document.documentElement.dataset.theme === "dark";
+    themeToggle.setAttribute("aria-label", `Switch to ${dark ? "light" : "dark"} theme`);
+  }
+  updateThemeToggle();
+  themeToggle.addEventListener("click", () => {
     const dark = document.documentElement.getAttribute("data-theme") === "dark";
     const next = dark ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
     localStorage.setItem("theme", next);
+    updateThemeToggle();
   });
 
   $("#copy-fingerprint").addEventListener("click", async function() {
