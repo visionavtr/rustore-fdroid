@@ -2,53 +2,122 @@ package internal
 
 import (
 	"archive/zip"
+	"bytes"
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/pem"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"go.mozilla.org/pkcs7"
 )
 
 func SignJAR(repoPath, certPath, keyPath string) error {
+	_, err := SignRepository(repoPath, certPath, keyPath)
+	return err
+}
+
+func SignRepository(repoPath, certPath, keyPath string) (string, error) {
 	indexData, err := os.ReadFile(IndexV1Path(repoPath))
 	if err != nil {
-		return fmt.Errorf("read index: %w", err)
+		return "", fmt.Errorf("read index: %w", err)
 	}
-
-	manifest := buildManifest(indexData)
-	sf := buildSignatureFile(manifest)
+	idx, err := LoadIndexV1(repoPath)
+	if err != nil {
+		return "", err
+	}
+	indexV2Data, err := BuildIndexV2(repoPath, idx)
+	if err != nil {
+		return "", fmt.Errorf("build index-v2: %w", err)
+	}
+	entryData, err := BuildEntry(idx, indexV2Data, IndexV2PackageCount(idx))
+	if err != nil {
+		return "", fmt.Errorf("build entry: %w", err)
+	}
 
 	cert, key, err := loadCertAndKey(certPath, keyPath)
 	if err != nil {
-		return err
+		return "", err
 	}
-
-	sigData, err := createPKCS7Signature(sf, cert, key)
+	indexJar, err := createSignedJAR("index-v1.json", indexData, cert, key, false)
 	if err != nil {
-		return err
+		return "", fmt.Errorf("sign index-v1: %w", err)
+	}
+	entryJar, err := createSignedJAR("entry.json", entryData, cert, key, true)
+	if err != nil {
+		return "", fmt.Errorf("sign entry: %w", err)
 	}
 
+	// Stage every file before replacing any published index. The signed entry is
+	// the v2 trust anchor, so commit it last.
+	files := []struct {
+		path string
+		data []byte
+	}{
+		{filepath.Join(repoPath, "index-v1.jar"), indexJar},
+		{IndexV2Path(repoPath), indexV2Data},
+		{EntryPath(repoPath), entryData},
+		{filepath.Join(repoPath, "entry.jar"), entryJar},
+	}
+	staged := make([]string, len(files))
+	defer func() {
+		for _, path := range staged {
+			if path != "" {
+				_ = os.Remove(path)
+			}
+		}
+	}()
+	for i, file := range files {
+		if info, err := os.Lstat(file.path); err == nil && info.IsDir() {
+			return "", fmt.Errorf("publish %s: destination is a directory", filepath.Base(file.path))
+		} else if err != nil && !os.IsNotExist(err) {
+			return "", fmt.Errorf("check %s: %w", filepath.Base(file.path), err)
+		}
+		staged[i], err = stageFile(file.path, file.data, 0o644)
+		if err != nil {
+			return "", fmt.Errorf("stage %s: %w", filepath.Base(file.path), err)
+		}
+	}
+	for i, file := range files {
+		if err := os.Rename(staged[i], file.path); err != nil {
+			return "", fmt.Errorf("publish %s: %w", filepath.Base(file.path), err)
+		}
+		staged[i] = ""
+	}
+	dir, err := os.Open(repoPath)
+	if err != nil {
+		return "", fmt.Errorf("open repository directory: %w", err)
+	}
+	if err := dir.Sync(); err != nil {
+		_ = dir.Close()
+		return "", fmt.Errorf("sync repository directory: %w", err)
+	}
+	if err := dir.Close(); err != nil {
+		return "", fmt.Errorf("close repository directory: %w", err)
+	}
+
+	fingerprint := sha256.Sum256(cert.Raw)
+	return strings.ToUpper(hex.EncodeToString(fingerprint[:])), nil
+}
+
+func createSignedJAR(dataName string, data []byte, cert *x509.Certificate, key crypto.PrivateKey, modern bool) ([]byte, error) {
+	manifest := buildManifestFor(dataName, data)
+	sf := buildSignatureFileFor(dataName, manifest)
+	sigData, err := createPKCS7SignatureWithDigest(sf, cert, key, modern)
+	if err != nil {
+		return nil, err
+	}
 	ext, err := keyTypeExtension(key)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	jarPath := IndexV1Path(repoPath)[:len(IndexV1Path(repoPath))-5] + ".jar"
-
-	f, err := os.Create(jarPath)
-	if err != nil {
-		return fmt.Errorf("create jar: %w", err)
-	}
-	defer f.Close()
-
-	w := zip.NewWriter(f)
-	defer w.Close()
 
 	entries := []struct {
 		name string
@@ -57,32 +126,44 @@ func SignJAR(repoPath, certPath, keyPath string) error {
 		{"META-INF/MANIFEST.MF", manifest},
 		{"META-INF/CERT.SF", sf},
 		{"META-INF/CERT." + ext, sigData},
-		{"index-v1.json", indexData},
+		{dataName, data},
 	}
 
+	var buf bytes.Buffer
+	w := zip.NewWriter(&buf)
 	for _, e := range entries {
 		fw, err := w.Create(e.name)
 		if err != nil {
-			return fmt.Errorf("create zip entry %s: %w", e.name, err)
+			return nil, fmt.Errorf("create zip entry %s: %w", e.name, err)
 		}
 		if _, err := fw.Write(e.data); err != nil {
-			return fmt.Errorf("write zip entry %s: %w", e.name, err)
+			return nil, fmt.Errorf("write zip entry %s: %w", e.name, err)
 		}
 	}
-
-	return nil
+	if err := w.Close(); err != nil {
+		return nil, fmt.Errorf("close jar: %w", err)
+	}
+	return buf.Bytes(), nil
 }
 
 func buildManifest(indexData []byte) []byte {
-	digest := sha256.Sum256(indexData)
+	return buildManifestFor("index-v1.json", indexData)
+}
+
+func buildManifestFor(dataName string, data []byte) []byte {
+	digest := sha256.Sum256(data)
 	b64 := base64.StdEncoding.EncodeToString(digest[:])
 
 	return []byte("Manifest-Version: 1.0\r\n\r\n" +
-		"Name: index-v1.json\r\n" +
+		"Name: " + dataName + "\r\n" +
 		"SHA-256-Digest: " + b64 + "\r\n\r\n")
 }
 
 func buildSignatureFile(manifest []byte) []byte {
+	return buildSignatureFileFor("index-v1.json", manifest)
+}
+
+func buildSignatureFileFor(dataName string, manifest []byte) []byte {
 	manifestDigest := sha256.Sum256(manifest)
 	manifestB64 := base64.StdEncoding.EncodeToString(manifestDigest[:])
 
@@ -93,7 +174,7 @@ func buildSignatureFile(manifest []byte) []byte {
 
 	return []byte("Signature-Version: 1.0\r\n" +
 		"SHA-256-Digest-Manifest: " + manifestB64 + "\r\n\r\n" +
-		"Name: index-v1.json\r\n" +
+		"Name: " + dataName + "\r\n" +
 		"SHA-256-Digest: " + sectionB64 + "\r\n\r\n")
 }
 
@@ -153,9 +234,16 @@ func loadCertAndKey(certPath, keyPath string) (*x509.Certificate, crypto.Private
 }
 
 func createPKCS7Signature(data []byte, cert *x509.Certificate, key crypto.PrivateKey) ([]byte, error) {
+	return createPKCS7SignatureWithDigest(data, cert, key, false)
+}
+
+func createPKCS7SignatureWithDigest(data []byte, cert *x509.Certificate, key crypto.PrivateKey, modern bool) ([]byte, error) {
 	signedData, err := pkcs7.NewSignedData(data)
 	if err != nil {
 		return nil, fmt.Errorf("create signed data: %w", err)
+	}
+	if modern {
+		signedData.SetDigestAlgorithm(pkcs7.OIDDigestAlgorithmSHA256)
 	}
 
 	if err := signedData.AddSigner(cert, key, pkcs7.SignerInfoConfig{}); err != nil {

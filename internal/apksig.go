@@ -21,21 +21,36 @@ const apkSigV2BlockID = 0x7109871a
 // signing certificate. It tries JAR signature (v1) first, then falls back
 // to APK Signature Scheme v2.
 func ExtractAPKSig(apkPath string) (string, error) {
-	sig, err := extractV1Sig(apkPath)
-	if err == nil {
-		return sig, nil
+	signers, err := ExtractAPKSigners(apkPath)
+	if err != nil {
+		return "", err
 	}
-	return extractV2Sig(apkPath)
+	if len(signers) == 0 {
+		return "", fmt.Errorf("no APK signing certificates found")
+	}
+	return signers[0], nil
 }
 
-// extractV1Sig reads the JAR-style PKCS7 signature from META-INF/*.RSA|DSA|EC.
-func extractV1Sig(apkPath string) (string, error) {
+// ExtractAPKSigners returns the SHA-256 fingerprints of all APK signing
+// certificates found in the v1 or v2 signature data.
+func ExtractAPKSigners(apkPath string) ([]string, error) {
+	signers, err := extractV1Signers(apkPath)
+	if err == nil && len(signers) > 0 {
+		return signers, nil
+	}
+	return extractV2Signers(apkPath)
+}
+
+// extractV1Signers reads JAR-style PKCS7 signatures from META-INF/*.RSA|DSA|EC.
+func extractV1Signers(apkPath string) ([]string, error) {
 	r, err := zip.OpenReader(apkPath)
 	if err != nil {
-		return "", fmt.Errorf("open APK: %w", err)
+		return nil, fmt.Errorf("open APK: %w", err)
 	}
 	defer r.Close()
 
+	var signers []string
+	seen := make(map[string]struct{})
 	for _, f := range r.File {
 		dir := filepath.Dir(f.Name)
 		ext := strings.ToUpper(filepath.Ext(f.Name))
@@ -48,56 +63,66 @@ func extractV1Sig(apkPath string) (string, error) {
 
 		rc, err := f.Open()
 		if err != nil {
-			return "", fmt.Errorf("open %s: %w", f.Name, err)
+			return nil, fmt.Errorf("open %s: %w", f.Name, err)
 		}
-		defer rc.Close()
 
 		buf, err := io.ReadAll(rc)
+		_ = rc.Close()
 		if err != nil {
-			return "", fmt.Errorf("read %s: %w", f.Name, err)
+			return nil, fmt.Errorf("read %s: %w", f.Name, err)
 		}
 
 		p7, err := pkcs7.Parse(buf)
 		if err != nil {
-			return "", fmt.Errorf("parse PKCS7 from %s: %w", f.Name, err)
+			return nil, fmt.Errorf("parse PKCS7 from %s: %w", f.Name, err)
 		}
 
-		if len(p7.Certificates) == 0 {
-			return "", fmt.Errorf("no certificates in %s", f.Name)
+		cert := p7.GetOnlySigner()
+		if cert == nil && len(p7.Certificates) > 0 {
+			cert = p7.Certificates[0]
 		}
-
-		hash := sha256.Sum256(p7.Certificates[0].Raw)
-		return hex.EncodeToString(hash[:]), nil
+		if cert == nil {
+			continue
+		}
+		hash := sha256.Sum256(cert.Raw)
+		fingerprint := hex.EncodeToString(hash[:])
+		if _, ok := seen[fingerprint]; !ok {
+			seen[fingerprint] = struct{}{}
+			signers = append(signers, fingerprint)
+		}
 	}
 
-	return "", fmt.Errorf("no v1 signing certificate found")
+	if len(signers) == 0 {
+		return nil, fmt.Errorf("no v1 signing certificate found")
+	}
+	return signers, nil
 }
 
-// extractV2Sig reads the signing certificate from the APK Signature Scheme v2
+// extractV2Signers reads signing certificates from the APK Signature Scheme v2
 // block embedded in the APK binary.
-func extractV2Sig(apkPath string) (string, error) {
+func extractV2Signers(apkPath string) ([]string, error) {
 	f, err := os.Open(apkPath)
 	if err != nil {
-		return "", fmt.Errorf("open APK: %w", err)
+		return nil, fmt.Errorf("open APK: %w", err)
 	}
 	defer f.Close()
 
 	fi, err := f.Stat()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// Find End of Central Directory (last 22 bytes for no-comment case)
 	if fi.Size() < 22 {
-		return "", fmt.Errorf("file too small to be an APK")
+		return nil, fmt.Errorf("file too small to be an APK")
 	}
 
 	eocd := make([]byte, 22)
 	if _, err := f.ReadAt(eocd, fi.Size()-22); err != nil {
-		return "", fmt.Errorf("read EOCD: %w", err)
+		return nil, fmt.Errorf("read EOCD: %w", err)
 	}
 	if binary.LittleEndian.Uint32(eocd[:4]) != 0x06054b50 {
-		return "", fmt.Errorf("EOCD signature not found")
+		return nil, fmt.Errorf("EOCD signature not found")
 	}
 
 	cdOffset := int64(binary.LittleEndian.Uint32(eocd[16:20]))
@@ -105,24 +130,27 @@ func extractV2Sig(apkPath string) (string, error) {
 	// APK Signing Block sits just before the Central Directory.
 	// Its last 24 bytes: 8-byte block size + 16-byte magic.
 	if cdOffset < 24 {
-		return "", fmt.Errorf("no space for APK Signing Block")
+		return nil, fmt.Errorf("no space for APK Signing Block")
 	}
 
 	tail := make([]byte, 24)
 	if _, err := f.ReadAt(tail, cdOffset-24); err != nil {
-		return "", fmt.Errorf("read signing block tail: %w", err)
+		return nil, fmt.Errorf("read signing block tail: %w", err)
 	}
 
 	if string(tail[8:]) != apkSigBlockMagic {
-		return "", fmt.Errorf("APK Signing Block magic not found")
+		return nil, fmt.Errorf("APK Signing Block magic not found")
 	}
 
 	blockSize := int64(binary.LittleEndian.Uint64(tail[:8]))
 	blockStart := cdOffset - blockSize - 8
+	if blockSize < 24 || blockStart < 0 || blockSize > fi.Size() {
+		return nil, fmt.Errorf("invalid APK Signing Block size")
+	}
 
 	block := make([]byte, blockSize+8)
 	if _, err := f.ReadAt(block, blockStart); err != nil {
-		return "", fmt.Errorf("read signing block: %w", err)
+		return nil, fmt.Errorf("read signing block: %w", err)
 	}
 
 	// Parse ID-value pairs starting after the 8-byte size header,
@@ -133,7 +161,11 @@ func extractV2Sig(apkPath string) (string, error) {
 		if offset+12 > end {
 			break
 		}
-		pairSize := int(binary.LittleEndian.Uint64(block[offset : offset+8]))
+		pairSize64 := binary.LittleEndian.Uint64(block[offset : offset+8])
+		if pairSize64 < 4 || pairSize64 > uint64(end-offset-8) {
+			return nil, fmt.Errorf("invalid APK Signing Block entry size")
+		}
+		pairSize := int(pairSize64)
 		pairID := binary.LittleEndian.Uint32(block[offset+8 : offset+12])
 
 		if pairID == apkSigV2BlockID {
@@ -142,63 +174,75 @@ func extractV2Sig(apkPath string) (string, error) {
 		offset += 8 + pairSize
 	}
 
-	return "", fmt.Errorf("APK Signature Scheme v2 block not found")
+	return nil, fmt.Errorf("APK Signature Scheme v2 block not found")
 }
 
-// parseV2Signers extracts the first certificate from a v2 signers block.
+// parseV2Signers extracts the first certificate from each v2 signer.
 // Format: length-prefixed sequence of signers, each containing
 // signed_data (digests, certificates, ...), signatures, public_key.
-func parseV2Signers(data []byte) (string, error) {
+func parseV2Signers(data []byte) ([]string, error) {
 	if len(data) < 4 {
-		return "", fmt.Errorf("v2 signers block too short")
+		return nil, fmt.Errorf("v2 signers block too short")
+	}
+	signersLength := int(binary.LittleEndian.Uint32(data[:4]))
+	if signersLength > len(data)-4 {
+		return nil, fmt.Errorf("v2 signers block truncated")
 	}
 
-	// Skip signers sequence length prefix
 	off := 4
-
-	// First signer length
-	if off+4 > len(data) {
-		return "", fmt.Errorf("v2 signer truncated")
+	end := off + signersLength
+	var fingerprints []string
+	for off < end {
+		signer, err := readLengthPrefixed(data[:end], &off)
+		if err != nil {
+			return nil, fmt.Errorf("read v2 signer: %w", err)
+		}
+		certDER, err := firstV2SignerCertificate(signer)
+		if err != nil {
+			return nil, err
+		}
+		hash := sha256.Sum256(certDER)
+		fingerprints = append(fingerprints, hex.EncodeToString(hash[:]))
 	}
-	signerLen := int(binary.LittleEndian.Uint32(data[off : off+4]))
-	off += 4
-	if off+signerLen > len(data) {
-		return "", fmt.Errorf("v2 signer data truncated")
+	if len(fingerprints) == 0 {
+		return nil, fmt.Errorf("no v2 signing certificates found")
 	}
-	signer := data[off : off+signerLen]
+	return fingerprints, nil
+}
 
-	// signed_data is the first length-prefixed field in the signer
-	if len(signer) < 4 {
-		return "", fmt.Errorf("signed_data truncated")
+func firstV2SignerCertificate(signer []byte) ([]byte, error) {
+	off := 0
+	signedData, err := readLengthPrefixed(signer, &off)
+	if err != nil {
+		return nil, fmt.Errorf("read v2 signed data: %w", err)
 	}
-	signedDataLen := int(binary.LittleEndian.Uint32(signer[:4]))
-	signedData := signer[4 : 4+signedDataLen]
-
 	// signed_data: digests (skip), then certificates
 	sd := 0
-	if sd+4 > len(signedData) {
-		return "", fmt.Errorf("digests length truncated")
+	if _, err := readLengthPrefixed(signedData, &sd); err != nil {
+		return nil, fmt.Errorf("read v2 digests: %w", err)
 	}
-	digestsLen := int(binary.LittleEndian.Uint32(signedData[sd : sd+4]))
-	sd += 4 + digestsLen
+	certificates, err := readLengthPrefixed(signedData, &sd)
+	if err != nil {
+		return nil, fmt.Errorf("read v2 certificates: %w", err)
+	}
+	certOffset := 0
+	certDER, err := readLengthPrefixed(certificates, &certOffset)
+	if err != nil {
+		return nil, fmt.Errorf("read v2 certificate: %w", err)
+	}
+	return certDER, nil
+}
 
-	// certificates: length-prefixed sequence
-	if sd+4 > len(signedData) {
-		return "", fmt.Errorf("certificates length truncated")
+func readLengthPrefixed(data []byte, offset *int) ([]byte, error) {
+	if *offset < 0 || *offset+4 > len(data) {
+		return nil, fmt.Errorf("length prefix truncated")
 	}
-	sd += 4 // skip certificates sequence length
-
-	// First certificate
-	if sd+4 > len(signedData) {
-		return "", fmt.Errorf("certificate length truncated")
+	length := int(binary.LittleEndian.Uint32(data[*offset : *offset+4]))
+	*offset += 4
+	if length < 0 || length > len(data)-*offset {
+		return nil, fmt.Errorf("length-prefixed value truncated")
 	}
-	certLen := int(binary.LittleEndian.Uint32(signedData[sd : sd+4]))
-	sd += 4
-	if sd+certLen > len(signedData) {
-		return "", fmt.Errorf("certificate data truncated")
-	}
-	certDER := signedData[sd : sd+certLen]
-
-	hash := sha256.Sum256(certDER)
-	return hex.EncodeToString(hash[:]), nil
+	value := data[*offset : *offset+length]
+	*offset += length
+	return value, nil
 }

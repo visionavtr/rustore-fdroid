@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/visionavtr/rustore-fdroid/internal"
 	"github.com/visionavtr/rustore-fdroid/web"
 )
 
@@ -14,7 +15,11 @@ var frontendAddCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Install web frontend into repository",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return web.Install(repoPath)
+		idx, err := internal.LoadIndexV1(repoPath)
+		if err != nil {
+			return err
+		}
+		return web.Install(repoPath, idx)
 	},
 }
 

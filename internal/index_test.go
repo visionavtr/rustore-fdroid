@@ -69,6 +69,12 @@ func TestLoadSaveIndexV1_RoundTrip(t *testing.T) {
 	if len(loaded.Apps) != 2 {
 		t.Errorf("got %d apps, want 2", len(loaded.Apps))
 	}
+	if loaded.Repo.Version != MetadataVersion {
+		t.Errorf("repo version = %d, want schema version %d", loaded.Repo.Version, MetadataVersion)
+	}
+	if loaded.Repo.MaxAge != DefaultMaxAge {
+		t.Errorf("repo max age = %d, want %d", loaded.Repo.MaxAge, DefaultMaxAge)
+	}
 	if loaded.Apps[0].PackageName != "ru.sberbankmobile" {
 		t.Errorf("first app = %q, want ru.sberbankmobile", loaded.Apps[0].PackageName)
 	}

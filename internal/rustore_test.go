@@ -99,11 +99,19 @@ func TestFetchAppInfo_ValidResponse(t *testing.T) {
 		resp := OverallInfoResponse{
 			rustoreResponse: rustoreResponse{Code: "OK"},
 			Body: AppInfo{
-				AppID:       12345,
-				PackageName: "ru.sberbankmobile",
-				AppName:     "Sberbank",
-				VersionCode: 100,
-				VersionName: "1.0.0",
+				AppID:         12345,
+				PackageName:   "ru.sberbankmobile",
+				AppName:       "Sberbank",
+				WhatsNew:      "Changes",
+				VersionCode:   100,
+				VersionName:   "1.0.0",
+				MaxSdkVersion: 35,
+				FileURLs: []AppFile{{
+					URL:     "https://example.com/screenshot.png",
+					Ordinal: 1,
+					Type:    "SCREENSHOT",
+				}},
+				DeveloperContacts: DeveloperContacts{Email: "dev@example.com"},
 			},
 		}
 		json.NewEncoder(w).Encode(resp)
@@ -123,6 +131,12 @@ func TestFetchAppInfo_ValidResponse(t *testing.T) {
 	}
 	if info.AppID != 12345 {
 		t.Errorf("got AppID=%d, want 12345", info.AppID)
+	}
+	if info.WhatsNew != "Changes" || info.MaxSdkVersion != 35 || info.DeveloperContacts.Email != "dev@example.com" {
+		t.Errorf("rich metadata was not decoded: %+v", info)
+	}
+	if len(info.FileURLs) != 1 || info.FileURLs[0].Type != "SCREENSHOT" {
+		t.Errorf("file URLs were not decoded: %+v", info.FileURLs)
 	}
 }
 

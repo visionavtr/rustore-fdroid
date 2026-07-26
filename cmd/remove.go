@@ -2,11 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/visionavtr/rustore-fdroid/internal"
+	"github.com/visionavtr/rustore-fdroid/web"
 )
 
 var keepFiles bool
@@ -32,15 +32,18 @@ var removeCmd = &cobra.Command{
 
 			if !keepFiles {
 				if app.Icon != "" {
-					iconPath := filepath.Join(repoPath, "icons", app.Icon)
-					if err := os.Remove(iconPath); err != nil && !os.IsNotExist(err) {
-						fmt.Printf("Warning: failed to remove icon %s: %v\n", app.Icon, err)
+					if err := internal.QueueFileRemoval(idx, filepath.Join("icons", app.Icon)); err != nil {
+						return err
 					}
 				}
 				for _, pkg := range idx.Packages[app.PackageName] {
-					apkPath := filepath.Join(repoPath, pkg.APKName)
-					if err := os.Remove(apkPath); err != nil && !os.IsNotExist(err) {
-						fmt.Printf("Warning: failed to remove APK %s: %v\n", pkg.APKName, err)
+					if err := internal.QueueFileRemoval(idx, pkg.APKName); err != nil {
+						return err
+					}
+				}
+				for _, screenshot := range app.PhoneScreenshots {
+					if err := internal.QueueFileRemoval(idx, screenshot.Name); err != nil {
+						return err
 					}
 				}
 			}
@@ -49,7 +52,10 @@ var removeCmd = &cobra.Command{
 			idx.Apps = append(idx.Apps[:appIdx], idx.Apps[appIdx+1:]...)
 		}
 
-		return internal.SaveIndexV1(repoPath, idx)
+		if err := internal.SaveIndexV1(repoPath, idx); err != nil {
+			return err
+		}
+		return web.Refresh(repoPath, idx)
 	},
 }
 

@@ -2,6 +2,7 @@ package internal
 
 import (
 	"archive/zip"
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/elliptic"
@@ -11,7 +12,10 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/base64"
+	"encoding/hex"
+	"encoding/json"
 	"encoding/pem"
+	"io"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -101,6 +105,11 @@ func TestSignJAR_RoundTrip(t *testing.T) {
 	if err := SignJAR(dir, certPath, keyPath); err != nil {
 		t.Fatalf("SignJAR: %v", err)
 	}
+	for _, name := range []string{"index-v2.json", "entry.json", "entry.jar"} {
+		if _, err := os.Stat(filepath.Join(dir, name)); err != nil {
+			t.Fatalf("%s not created: %v", name, err)
+		}
+	}
 
 	jarPath := filepath.Join(dir, "index-v1.jar")
 	if _, err := os.Stat(jarPath); err != nil {
@@ -132,6 +141,55 @@ func TestSignJAR_RoundTrip(t *testing.T) {
 			t.Errorf("missing JAR entry: %s", name)
 		}
 	}
+
+	entryData, err := os.ReadFile(filepath.Join(dir, "entry.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var entry Entry
+	if err := json.Unmarshal(entryData, &entry); err != nil {
+		t.Fatalf("parse entry.json: %v", err)
+	}
+	indexV2Data, err := os.ReadFile(filepath.Join(dir, "index-v2.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	indexHash := sha256.Sum256(indexV2Data)
+	if entry.Index.SHA256 != hex.EncodeToString(indexHash[:]) {
+		t.Fatalf("entry index hash = %q, want %x", entry.Index.SHA256, indexHash)
+	}
+	if entry.Version != MetadataVersion || entry.Index.Name != "/index-v2.json" {
+		t.Fatalf("unexpected entry: %+v", entry)
+	}
+	assertJARData(t, filepath.Join(dir, "entry.jar"), "entry.json", entryData)
+}
+
+func assertJARData(t *testing.T, jarPath, dataName string, want []byte) {
+	t.Helper()
+	r, err := zip.OpenReader(jarPath)
+	if err != nil {
+		t.Fatalf("open %s: %v", jarPath, err)
+	}
+	defer r.Close()
+	for _, file := range r.File {
+		if file.Name != dataName {
+			continue
+		}
+		rc, err := file.Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := io.ReadAll(rc)
+		_ = rc.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(got, want) {
+			t.Fatalf("%s in JAR differs from file", dataName)
+		}
+		return
+	}
+	t.Fatalf("missing %s in %s", dataName, jarPath)
 }
 
 func generateTestCert(t *testing.T, dir string) (certPath, keyPath string) {

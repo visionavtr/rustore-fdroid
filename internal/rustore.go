@@ -35,21 +35,38 @@ type OverallInfoResponse struct {
 }
 
 type AppInfo struct {
-	AppID            int      `json:"appId"`
-	PackageName      string   `json:"packageName"`
-	AppName          string   `json:"appName"`
-	ShortDescription string   `json:"shortDescription"`
-	FullDescription  string   `json:"fullDescription"`
-	IconURL          string   `json:"iconUrl"`
-	VersionCode      int      `json:"versionCode"`
-	VersionName      string   `json:"versionName"`
-	MinSdkVersion    int      `json:"minSdkVersion"`
-	TargetSdkVersion int      `json:"targetSdkVersion"`
-	CompanyName      string   `json:"companyName"`
-	Categories       []string `json:"categories"`
-	Signatures       []string `json:"signatures"`
-	FirstPublishedAt string   `json:"firstPublishedAt"`
-	AppVerUpdatedAt  string   `json:"appVerUpdatedAt"`
+	AppID             int               `json:"appId"`
+	PackageName       string            `json:"packageName"`
+	AppName           string            `json:"appName"`
+	ShortDescription  string            `json:"shortDescription"`
+	FullDescription   string            `json:"fullDescription"`
+	WhatsNew          string            `json:"whatsNew"`
+	IconURL           string            `json:"iconUrl"`
+	VersionCode       int               `json:"versionCode"`
+	VersionName       string            `json:"versionName"`
+	MinSdkVersion     int               `json:"minSdkVersion"`
+	TargetSdkVersion  int               `json:"targetSdkVersion"`
+	MaxSdkVersion     int               `json:"maxSdkVersion"`
+	CompanyName       string            `json:"companyName"`
+	Categories        []string          `json:"categories"`
+	Signatures        []string          `json:"signatures"`
+	FileURLs          []AppFile         `json:"fileUrls"`
+	DeveloperContacts DeveloperContacts `json:"developerContacts"`
+	FirstPublishedAt  string            `json:"firstPublishedAt"`
+	AppVerUpdatedAt   string            `json:"appVerUpdatedAt"`
+}
+
+type AppFile struct {
+	URL         string `json:"fileUrl"`
+	Ordinal     int    `json:"ordinal"`
+	Type        string `json:"type"`
+	Orientation string `json:"orientation"`
+}
+
+type DeveloperContacts struct {
+	Email       string `json:"email"`
+	Website     string `json:"website"`
+	VKCommunity string `json:"vkCommunity"`
 }
 
 type DownloadLinkResponse struct {

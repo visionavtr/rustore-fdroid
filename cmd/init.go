@@ -21,7 +21,8 @@ var initCmd = &cobra.Command{
 		idx := &internal.IndexV1{
 			Repo: internal.Repo{
 				Timestamp:   internal.JavaTime(),
-				Version:     0,
+				Version:     internal.MetadataVersion,
+				MaxAge:      internal.DefaultMaxAge,
 				Name:        initName,
 				Icon:        "icon.jpg",
 				Address:     initAddress,
@@ -41,7 +42,7 @@ var initCmd = &cobra.Command{
 
 		withFrontend, _ := cmd.Flags().GetBool("frontend")
 		if withFrontend {
-			if err := web.Install(repoPath); err != nil {
+			if err := web.Install(repoPath, idx); err != nil {
 				return err
 			}
 		}

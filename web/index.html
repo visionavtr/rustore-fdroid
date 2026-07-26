@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23d97706'/%3E%3Cpath d='M19 20h26v7H27v8h15v7H27v12h-8z' fill='white'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -95,6 +96,46 @@
     font-size: 0.8rem; color: var(--text-tertiary); letter-spacing: 0.01em;
   }
   .meta-chip svg { flex-shrink: 0; }
+
+  /* ── Repository onboarding ── */
+  .onboarding {
+    margin-top: 28px; display: grid; grid-template-columns: 1fr auto;
+    gap: 24px; align-items: center; padding: 20px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+  }
+  .onboarding[hidden] { display: none; }
+  .onboarding-eyebrow {
+    font-family: var(--font-heading); font-size: 0.7rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent);
+  }
+  .onboarding-title {
+    margin-top: 4px; font-family: var(--font-heading); font-size: 1.05rem;
+    font-weight: 650; letter-spacing: -0.015em;
+  }
+  .onboarding-copy { margin-top: 6px; color: var(--text-secondary); font-size: 0.84rem; max-width: 680px; }
+  .onboarding-actions { display: flex; align-items: center; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+  .add-repo-btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px;
+    border-radius: var(--radius-sm); background: var(--accent); color: #fff;
+    font-size: 0.82rem; font-weight: 600; text-decoration: none;
+    transition: background var(--transition), transform var(--transition);
+  }
+  .add-repo-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+  .copy-fingerprint {
+    border: 1px solid var(--border); background: var(--bg); color: var(--text-secondary);
+    border-radius: var(--radius-sm); padding: 8px 11px; font-family: var(--font);
+    font-size: 0.76rem; cursor: pointer; transition: color var(--transition), border-color var(--transition);
+  }
+  .copy-fingerprint:hover { color: var(--accent); border-color: var(--accent); }
+  .fingerprint {
+    display: block; margin-top: 12px; max-width: 720px; overflow-wrap: anywhere;
+    color: var(--text-tertiary); font: 0.68rem/1.55 ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  }
+  .repo-qr {
+    width: 116px; height: 116px; padding: 6px; object-fit: contain;
+    background: #fff; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  }
 
   /* ── Toolbar ── */
   .toolbar { display: flex; align-items: center; gap: 12px; padding: 24px 0 20px; flex-wrap: wrap; }
@@ -189,7 +230,7 @@
   .modal-overlay {
     position: fixed; inset: 0; background: var(--bg-modal);
     backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-    z-index: 1000; display: flex; align-items: flex-start;
+    z-index: 1000; display: none; align-items: flex-start;
     justify-content: center; padding: 40px 20px; overflow-y: auto;
     opacity: 0; transition: opacity 0.2s ease;
   }
@@ -274,6 +315,25 @@
     font-weight: 500; background: var(--orange-bg); color: var(--orange);
   }
   .modal-categories { display: flex; gap: 6px; flex-wrap: wrap; }
+  .contact-links { display: flex; gap: 8px; flex-wrap: wrap; }
+  .contact-link {
+    display: inline-flex; align-items: center; gap: 5px; color: var(--accent);
+    font-size: 0.8rem; font-weight: 500; text-decoration: none;
+  }
+  .contact-link:hover { text-decoration: underline; }
+
+  .screenshot-strip {
+    display: grid; grid-auto-flow: column; grid-auto-columns: minmax(140px, 34%);
+    gap: 10px; overflow-x: auto; overscroll-behavior-inline: contain;
+    scroll-snap-type: inline mandatory; padding: 2px 0 8px;
+  }
+  .screenshot-link { scroll-snap-align: start; border-radius: var(--radius-sm); overflow: hidden; background: var(--bg); }
+  .screenshot {
+    display: block; width: 100%; aspect-ratio: 9 / 16; object-fit: cover;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    transition: transform var(--transition), border-color var(--transition);
+  }
+  .screenshot:hover { transform: translateY(-2px); border-color: var(--accent); }
 
   /* ── Version list ── */
   .version-list { display: flex; flex-direction: column; gap: 8px; }
@@ -341,6 +401,9 @@
     .modal-body { padding: 0 20px 20px; }
     .toolbar { gap: 8px; }
     .app-count { margin-left: 0; width: 100%; }
+    .onboarding { grid-template-columns: 1fr; }
+    .repo-qr { width: 104px; height: 104px; grid-row: 1; }
+    .screenshot-strip { grid-auto-columns: 58%; }
   }
 </style>
 </head>
@@ -353,6 +416,22 @@
       <p class="description" id="repo-desc"></p>
     </div>
     <div class="header-meta" id="header-meta"></div>
+    <section class="onboarding" id="onboarding" hidden>
+      <div>
+        <div class="onboarding-eyebrow">Verified repository</div>
+        <div class="onboarding-title">Add this catalog to F-Droid</div>
+        <p class="onboarding-copy">Open the signed repository link on Android or scan the QR code. The SHA-256 certificate fingerprint is included automatically.</p>
+        <div class="onboarding-actions">
+          <a class="add-repo-btn" id="add-repo-link" href="#">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Add to F-Droid
+          </a>
+          <button class="copy-fingerprint" id="copy-fingerprint" type="button">Copy fingerprint</button>
+        </div>
+        <code class="fingerprint" id="repo-fingerprint"></code>
+      </div>
+      <img class="repo-qr" id="repo-qr" src="index.png" alt="QR code for adding this repository">
+    </section>
   </header>
 
   <div class="toolbar">
@@ -385,6 +464,7 @@
     document.documentElement.setAttribute("data-theme", "dark");
 
   let indexData = null;
+  let repoInfo = null;
   const $ = (s) => document.querySelector(s);
   const grid = $("#grid");
   const overlay = $("#modal-overlay");
@@ -408,6 +488,41 @@
     return d.innerHTML;
   }
 
+  function safeHttpURL(value) {
+    if (!value) return "";
+    try {
+      const parsed = new URL(value);
+      return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.href : "";
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function formatFingerprint(value) {
+    return (value || "").match(/.{1,2}/g)?.join(" ") || "";
+  }
+
+  function getPhoneScreenshots(app) {
+    if (app._rustorePhoneScreenshots && app._rustorePhoneScreenshots.length) {
+      return app._rustorePhoneScreenshots;
+    }
+    const localized = app.localized || {};
+    const locale = localized.ru ? "ru" : Object.keys(localized)[0];
+    const names = locale && localized[locale].phoneScreenshots;
+    return (names || []).map(name => ({
+      name: `${app.packageName}/${locale}/phoneScreenshots/${name}`
+    }));
+  }
+
+  function installIconFallback(img, placeholderClass) {
+    img.addEventListener("error", () => {
+      const placeholder = document.createElement("div");
+      placeholder.className = placeholderClass;
+      placeholder.textContent = img.dataset.initial || "?";
+      img.replaceWith(placeholder);
+    }, { once: true });
+  }
+
   function truncate(str, len) {
     if (!str) return "";
     return str.length > len ? str.slice(0, len) + "\u2026" : str;
@@ -427,17 +542,35 @@
   async function loadIndex() {
     showSkeleton();
     try {
-      const r = await fetch("index-v1.json");
+      const [r, infoResponse] = await Promise.all([
+        fetch("index-v1.json"),
+        fetch("repo-info.json").catch(() => null)
+      ]);
       if (!r.ok) throw new Error("HTTP " + r.status);
       indexData = await r.json();
+      if (infoResponse && infoResponse.ok) repoInfo = await infoResponse.json();
       renderHeader();
       renderGrid(indexData.apps);
+      renderOnboarding();
+      const requestedPackage = new URLSearchParams(location.search).get("package");
+      if (requestedPackage && indexData.apps.some(app => app.packageName === requestedPackage)) {
+        requestAnimationFrame(() => openModal(requestedPackage, false));
+      }
     } catch (e) {
       grid.innerHTML = `<div class="empty">
         <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="48" height="48"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg></div>
         <div class="empty-title">Could not load repository</div>
         <div class="empty-text">${esc(e.message)}</div></div>`;
     }
+  }
+
+  function renderOnboarding() {
+    if (!repoInfo || !repoInfo.fingerprint || !repoInfo.fdroidLink) return;
+    const section = $("#onboarding");
+    $("#add-repo-link").href = repoInfo.fdroidLink;
+    $("#repo-fingerprint").textContent = formatFingerprint(repoInfo.fingerprint);
+    $("#repo-qr").src = "index.png?v=" + encodeURIComponent(indexData.repo.timestamp || "");
+    section.hidden = false;
   }
 
   function renderHeader() {
@@ -449,7 +582,7 @@
       m += `<span class="meta-chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Updated ${formatDate(repo.timestamp)}</span>`;
     m += `<span class="meta-chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>${indexData.apps.length} app${indexData.apps.length !== 1 ? "s" : ""}</span>`;
     if (repo.version)
-      m += `<span class="meta-chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>Index v${repo.version}</span>`;
+      m += `<span class="meta-chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>Schema ${repo.version}</span>`;
     if (repo.address)
       m += `<span class="meta-chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>${esc(truncate(repo.address, 40))}</span>`;
     $("#header-meta").innerHTML = m;
@@ -470,8 +603,8 @@
       const iconSrc = app.icon ? `icons/${app.icon}` : "";
       const initial = (app.name || app.packageName || "?")[0].toUpperCase();
       const iconHtml = iconSrc
-        ? `<img class="card-icon" src="${esc(iconSrc)}" alt="" loading="lazy" onerror="this.outerHTML='<div class=\\'card-icon-placeholder\\'>${initial}</div>'">`
-        : `<div class="card-icon-placeholder">${initial}</div>`;
+        ? `<img class="card-icon" src="${esc(iconSrc)}" alt="" loading="lazy" data-initial="${esc(initial)}">`
+        : `<div class="card-icon-placeholder">${esc(initial)}</div>`;
       const cats = (app.categories || []).slice(0, 3).map(c => `<span class="tag">${esc(c)}</span>`).join("");
 
       h += `<div class="card" data-pkg="${esc(app.packageName)}" style="animation-delay:${Math.min(i * 40, 400)}ms">
@@ -489,7 +622,8 @@
       </div>`;
     });
     grid.innerHTML = h;
-    grid.querySelectorAll(".card").forEach(c => c.addEventListener("click", () => openModal(c.dataset.pkg)));
+    grid.querySelectorAll("img.card-icon").forEach(img => installIconFallback(img, "card-icon-placeholder"));
+    grid.querySelectorAll(".card").forEach(c => c.addEventListener("click", () => openModal(c.dataset.pkg, true)));
   }
 
   function updateAppCount(n) {
@@ -520,7 +654,7 @@
 
   // ── Modal ──
 
-  function openModal(pkg) {
+  function openModal(pkg, updateURL) {
     const app = indexData.apps.find(a => a.packageName === pkg);
     if (!app) return;
     const pkgs = (indexData.packages[pkg] || []).sort((a, b) => b.versionCode - a.versionCode);
@@ -528,11 +662,17 @@
     const iconSrc = app.icon ? `icons/${app.icon}` : "";
     const initial = (app.name || app.packageName || "?")[0].toUpperCase();
     const iconHtml = iconSrc
-      ? `<img class="modal-icon" src="${esc(iconSrc)}" alt="" onerror="this.outerHTML='<div class=\\'modal-icon-placeholder\\'>${initial}</div>'">`
-      : `<div class="modal-icon-placeholder">${initial}</div>`;
+      ? `<img class="modal-icon" src="${esc(iconSrc)}" alt="" data-initial="${esc(initial)}">`
+      : `<div class="modal-icon-placeholder">${esc(initial)}</div>`;
 
     const desc = esc(app.description || app.summary || "No description available.");
     const longDesc = (app.description || "").length > 250;
+
+    if (updateURL) {
+      const nextURL = new URL(location.href);
+      nextURL.searchParams.set("package", pkg);
+      history.replaceState(null, "", nextURL);
+    }
 
     let antiHtml = "";
     if (app.antiFeatures && app.antiFeatures.length) {
@@ -567,6 +707,36 @@
         </div></div>`;
     }
 
+    const latest = pkgs[0] || null;
+    let whatsNewHtml = "";
+    if (latest && latest.whatsNew) {
+      whatsNewHtml = `<div class="modal-section">
+        <div class="modal-section-title">What's new</div>
+        <div class="modal-description">${esc(latest.whatsNew)}</div></div>`;
+    }
+
+    let screenshotsHtml = "";
+    const screenshots = getPhoneScreenshots(app);
+    if (screenshots.length) {
+      screenshotsHtml = `<div class="modal-section">
+        <div class="modal-section-title">Screenshots</div>
+        <div class="screenshot-strip">${screenshots.map((file, index) => `
+          <a class="screenshot-link" href="${esc(file.name)}" target="_blank" rel="noopener">
+            <img class="screenshot" src="${esc(file.name)}" alt="${esc(app.name || app.packageName)} screenshot ${index + 1}" loading="lazy">
+          </a>`).join("")}</div></div>`;
+    }
+
+    const website = safeHttpURL(app.authorWebSite);
+    let contactsHtml = "";
+    if (app.authorEmail || website) {
+      contactsHtml = `<div class="modal-section">
+        <div class="modal-section-title">Developer</div>
+        <div class="contact-links">
+          ${app.authorEmail ? `<a class="contact-link" href="mailto:${encodeURIComponent(app.authorEmail)}">${esc(app.authorEmail)}</a>` : ""}
+          ${website ? `<a class="contact-link" href="${esc(website)}" target="_blank" rel="noopener">Website</a>` : ""}
+        </div></div>`;
+    }
+
     $("#modal").innerHTML = `
       <button class="modal-close" aria-label="Close">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
@@ -594,10 +764,12 @@
             <div class="meta-item"><div class="meta-label">Updated</div><div class="meta-value">${formatDate(app.lastUpdated)}</div></div>
           </div>
         </div>
-        ${catHtml}${antiHtml}${versionsHtml}
+        ${whatsNewHtml}${screenshotsHtml}${contactsHtml}${catHtml}${antiHtml}${versionsHtml}
       </div>`;
 
     overlay.style.display = "flex";
+    const modalIcon = overlay.querySelector("img.modal-icon");
+    if (modalIcon) installIconFallback(modalIcon, "modal-icon-placeholder");
     requestAnimationFrame(() => overlay.classList.add("visible"));
     document.body.style.overflow = "hidden";
 
@@ -613,6 +785,9 @@
     overlay.classList.remove("visible");
     overlay.classList.add("closing");
     document.body.style.overflow = "";
+    const nextURL = new URL(location.href);
+    nextURL.searchParams.delete("package");
+    history.replaceState(null, "", nextURL);
     setTimeout(() => { overlay.style.display = "none"; overlay.classList.remove("closing"); }, 220);
   }
 
@@ -625,6 +800,17 @@
     const next = dark ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
     localStorage.setItem("theme", next);
+  });
+
+  $("#copy-fingerprint").addEventListener("click", async function() {
+    if (!repoInfo || !repoInfo.fingerprint) return;
+    try {
+      await navigator.clipboard.writeText(repoInfo.fingerprint);
+      this.textContent = "Copied";
+      setTimeout(() => { this.textContent = "Copy fingerprint"; }, 1400);
+    } catch (_) {
+      this.textContent = "Copy failed";
+    }
   });
 
   loadIndex();
