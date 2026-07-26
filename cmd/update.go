@@ -30,21 +30,26 @@ var updateCmd = &cobra.Command{
 		}
 
 		prefetched := prefetchMetadata(args)
+		succeeded := 0
+		var failures []error
 
 		for _, packageID := range args {
 			fmt.Printf("--- %s ---\n", packageID)
 			pf := prefetched[packageID]
 			if pf.err != nil {
 				fmt.Printf("Error updating %s: %v\n", packageID, pf.err)
+				failures = append(failures, fmt.Errorf("%s: %w", packageID, pf.err))
 				continue
 			}
 			if err := addPackageWithMeta(idx, pf.info, pf.dlInfo); err != nil {
 				fmt.Printf("Error updating %s: %v\n", packageID, err)
+				failures = append(failures, fmt.Errorf("%s: %w", packageID, err))
 				continue
 			}
+			succeeded++
 		}
 
-		return internal.SaveIndexV1(repoPath, idx)
+		return finishPackageBatch(idx, "update", len(args), succeeded, failures)
 	},
 }
 

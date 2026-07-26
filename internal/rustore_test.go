@@ -93,6 +93,9 @@ func TestFetchAppInfo_InvalidPackageName(t *testing.T) {
 
 func TestFetchAppInfo_ValidResponse(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got := r.Header.Get(rustoreVersionHeader); got != rustoreVersionCode {
+			t.Errorf("%s header = %q, want %q", rustoreVersionHeader, got, rustoreVersionCode)
+		}
 		resp := OverallInfoResponse{
 			rustoreResponse: rustoreResponse{Code: "OK"},
 			Body: AppInfo{
@@ -155,5 +158,82 @@ func TestFetchDownloadLink_HTTPStatusError(t *testing.T) {
 	_, err := FetchDownloadLink(12345)
 	if err == nil {
 		t.Fatal("expected error for HTTP 404, got nil")
+	}
+}
+
+func TestFetchDownloadLink_RequiredHeadersAndDirectAPK(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("method = %s, want POST", r.Method)
+		}
+		if got := r.Header.Get(rustoreVersionHeader); got != rustoreVersionCode {
+			t.Errorf("%s header = %q, want %q", rustoreVersionHeader, got, rustoreVersionCode)
+		}
+		if got := r.Header.Get("Content-Type"); got != "application/json" {
+			t.Errorf("Content-Type = %q, want application/json", got)
+		}
+
+		var request struct {
+			AppID        int  `json:"appId"`
+			FirstInstall bool `json:"firstInstall"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Errorf("decode request: %v", err)
+		}
+		if request.AppID != 12345 || !request.FirstInstall {
+			t.Errorf("unexpected request body: %+v", request)
+		}
+
+		resp := DownloadLinkResponse{
+			rustoreResponse: rustoreResponse{Code: "OK"},
+			Body: DownloadBody{
+				DownloadURLs: []DownloadURL{{
+					URL:  "https://static.rustore.ru/app.ZIP?token=test",
+					Size: 100,
+					Hash: "abcdef",
+				}},
+				Signature: "signature",
+			},
+		}
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			t.Errorf("encode response: %v", err)
+		}
+	}))
+	defer ts.Close()
+
+	origURL := fetchDownloadLinkURL
+	fetchDownloadLinkURL = ts.URL
+	defer func() { fetchDownloadLinkURL = origURL }()
+
+	result, err := FetchDownloadLink(12345)
+	if err != nil {
+		t.Fatalf("FetchDownloadLink: %v", err)
+	}
+	if len(result.DownloadURLs) != 1 {
+		t.Fatalf("download URLs = %d, want 1", len(result.DownloadURLs))
+	}
+	download := result.DownloadURLs[0]
+	if download.URL != "https://static.rustore.ru/app.apk?token=test" {
+		t.Errorf("URL = %q, want direct APK URL", download.URL)
+	}
+	if download.Size != 0 || download.Hash != "" {
+		t.Errorf("ZIP metadata was not cleared: %+v", download)
+	}
+	if result.Signature != "signature" {
+		t.Errorf("signature = %q, want signature", result.Signature)
+	}
+}
+
+func TestNormalizeAPKDownload_LeavesDirectAPKMetadata(t *testing.T) {
+	download := DownloadURL{
+		URL:  "https://static.rustore.ru/app.apk",
+		Size: 100,
+		Hash: "abcdef",
+	}
+
+	normalizeAPKDownload(&download)
+
+	if download.URL != "https://static.rustore.ru/app.apk" || download.Size != 100 || download.Hash != "abcdef" {
+		t.Errorf("direct APK metadata changed: %+v", download)
 	}
 }

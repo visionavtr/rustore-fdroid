@@ -6,11 +6,17 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"regexp"
+	"strings"
 	"time"
 )
 
-const rustoreBaseURL = "https://backapi.rustore.ru/applicationData"
+const (
+	rustoreBaseURL       = "https://backapi.rustore.ru/applicationData"
+	rustoreVersionHeader = "ruStoreVerCode"
+	rustoreVersionCode   = "1105002"
+)
 
 // Mutable for testing.
 var (
@@ -47,6 +53,7 @@ type AppInfo struct {
 }
 
 type DownloadLinkResponse struct {
+	rustoreResponse
 	Body DownloadBody `json:"body"`
 }
 
@@ -88,7 +95,12 @@ func FetchAppInfo(packageID string) (*AppInfo, error) {
 }
 
 func fetchAppInfo(packageID string) (*AppInfo, error) {
-	resp, err := httpClient.Get(fetchAppInfoURL + packageID)
+	req, err := newRuStoreRequest(http.MethodGet, fetchAppInfoURL+packageID, nil)
+	if err != nil {
+		return nil, fmt.Errorf("create app info request: %w", err)
+	}
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("fetch app info: %w", err)
 	}
@@ -126,9 +138,21 @@ func FetchDownloadLink(appID int) (*DownloadBody, error) {
 }
 
 func fetchDownloadLink(appID int) (*DownloadBody, error) {
-	payload, _ := json.Marshal(map[string]int{"appId": appID})
+	payload, err := json.Marshal(struct {
+		AppID        int  `json:"appId"`
+		FirstInstall bool `json:"firstInstall"`
+	}{AppID: appID, FirstInstall: true})
+	if err != nil {
+		return nil, fmt.Errorf("marshal download request: %w", err)
+	}
 
-	resp, err := httpClient.Post(fetchDownloadLinkURL, "application/json", bytes.NewReader(payload))
+	req, err := newRuStoreRequest(http.MethodPost, fetchDownloadLinkURL, bytes.NewReader(payload))
+	if err != nil {
+		return nil, fmt.Errorf("create download link request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("fetch download link: %w", err)
 	}
@@ -147,6 +171,37 @@ func fetchDownloadLink(appID int) (*DownloadBody, error) {
 	if err := json.Unmarshal(body, &result); err != nil {
 		return nil, fmt.Errorf("parse download link: %w", err)
 	}
+	if result.Code == "ERROR" {
+		return nil, fmt.Errorf("fetch download link: %s", result.Message)
+	}
+
+	for i := range result.Body.DownloadURLs {
+		normalizeAPKDownload(&result.Body.DownloadURLs[i])
+	}
 
 	return &result.Body, nil
+}
+
+func newRuStoreRequest(method, requestURL string, body io.Reader) (*http.Request, error) {
+	req, err := http.NewRequest(method, requestURL, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set(rustoreVersionHeader, rustoreVersionCode)
+	return req, nil
+}
+
+// RuStore returns compressed .zip URLs for some apps, while the matching .apk
+// URL serves the directly installable package.
+func normalizeAPKDownload(download *DownloadURL) {
+	parsed, err := url.Parse(download.URL)
+	if err != nil || !strings.HasSuffix(strings.ToLower(parsed.Path), ".zip") {
+		return
+	}
+
+	parsed.Path = parsed.Path[:len(parsed.Path)-len(".zip")] + ".apk"
+	download.URL = parsed.String()
+	// The API-provided size and xxhash describe the compressed .zip object.
+	download.Size = 0
+	download.Hash = ""
 }

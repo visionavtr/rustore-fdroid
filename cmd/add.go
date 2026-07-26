@@ -3,6 +3,7 @@ package cmd
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -30,22 +31,34 @@ var addCmd = &cobra.Command{
 		}
 
 		prefetched := prefetchMetadata(args)
+		succeeded := 0
+		var failures []error
 
 		for _, packageID := range args {
 			fmt.Printf("--- %s ---\n", packageID)
 			pf := prefetched[packageID]
 			if pf.err != nil {
 				fmt.Printf("Error adding %s: %v\n", packageID, pf.err)
+				failures = append(failures, fmt.Errorf("%s: %w", packageID, pf.err))
 				continue
 			}
 			if err := addPackageWithMeta(idx, pf.info, pf.dlInfo); err != nil {
 				fmt.Printf("Error adding %s: %v\n", packageID, err)
+				failures = append(failures, fmt.Errorf("%s: %w", packageID, err))
 				continue
 			}
+			succeeded++
 		}
 
-		return internal.SaveIndexV1(repoPath, idx)
+		return finishPackageBatch(idx, "add", len(args), succeeded, failures)
 	},
+}
+
+func finishPackageBatch(idx *internal.IndexV1, operation string, total, succeeded int, failures []error) error {
+	if succeeded == 0 {
+		return fmt.Errorf("failed to %s all %d packages: %w", operation, total, errors.Join(failures...))
+	}
+	return internal.SaveIndexV1(repoPath, idx)
 }
 
 // maxConcurrentFetches limits parallel API requests to avoid overwhelming the server.
@@ -173,6 +186,11 @@ func addPackageWithMeta(idx *internal.IndexV1, info *internal.AppInfo, dlInfo *i
 			}
 			indexPkg.Hash = apkHash
 		}
+		fileInfo, err := os.Stat(apkFile)
+		if err != nil {
+			return fmt.Errorf("stat APK: %w", err)
+		}
+		indexPkg.Size = fileInfo.Size()
 
 		sig, err := internal.ExtractAPKSig(apkFile)
 		if err != nil {
