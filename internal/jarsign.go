@@ -19,11 +19,6 @@ import (
 	"go.mozilla.org/pkcs7"
 )
 
-func SignJAR(repoPath, certPath, keyPath string) error {
-	_, err := SignRepository(repoPath, certPath, keyPath)
-	return err
-}
-
 func SignRepository(repoPath, certPath, keyPath string) (string, error) {
 	indexData, err := os.ReadFile(IndexV1Path(repoPath))
 	if err != nil {
@@ -146,10 +141,6 @@ func createSignedJAR(dataName string, data []byte, cert *x509.Certificate, key c
 	return buf.Bytes(), nil
 }
 
-func buildManifest(indexData []byte) []byte {
-	return buildManifestFor("index-v1.json", indexData)
-}
-
 func buildManifestFor(dataName string, data []byte) []byte {
 	digest := sha256.Sum256(data)
 	b64 := base64.StdEncoding.EncodeToString(digest[:])
@@ -157,10 +148,6 @@ func buildManifestFor(dataName string, data []byte) []byte {
 	return []byte("Manifest-Version: 1.0\r\n\r\n" +
 		"Name: " + dataName + "\r\n" +
 		"SHA-256-Digest: " + b64 + "\r\n\r\n")
-}
-
-func buildSignatureFile(manifest []byte) []byte {
-	return buildSignatureFileFor("index-v1.json", manifest)
 }
 
 func buildSignatureFileFor(dataName string, manifest []byte) []byte {
@@ -231,10 +218,6 @@ func loadCertAndKey(certPath, keyPath string) (*x509.Certificate, crypto.Private
 	}
 
 	return cert, key, nil
-}
-
-func createPKCS7Signature(data []byte, cert *x509.Certificate, key crypto.PrivateKey) ([]byte, error) {
-	return createPKCS7SignatureWithDigest(data, cert, key, false)
 }
 
 func createPKCS7SignatureWithDigest(data []byte, cert *x509.Certificate, key crypto.PrivateKey, modern bool) ([]byte, error) {

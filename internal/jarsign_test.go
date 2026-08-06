@@ -26,7 +26,7 @@ import (
 
 func TestBuildManifest_UsesSHA256(t *testing.T) {
 	data := []byte(`{"repo":{"name":"test"}}`)
-	manifest := buildManifest(data)
+	manifest := buildManifestFor("index-v1.json", data)
 	s := string(manifest)
 
 	if strings.Contains(s, "SHA1-Digest") {
@@ -45,8 +45,8 @@ func TestBuildManifest_UsesSHA256(t *testing.T) {
 }
 
 func TestBuildSignatureFile_UsesSHA256(t *testing.T) {
-	manifest := buildManifest([]byte(`{"test":true}`))
-	sf := buildSignatureFile(manifest)
+	manifest := buildManifestFor("index-v1.json", []byte(`{"test":true}`))
+	sf := buildSignatureFileFor("index-v1.json", manifest)
 	s := string(sf)
 
 	if strings.Contains(s, "SHA1-") {
@@ -90,7 +90,7 @@ func TestKeyTypeExtension(t *testing.T) {
 	}
 }
 
-func TestSignJAR_RoundTrip(t *testing.T) {
+func TestSignRepository_RoundTrip(t *testing.T) {
 	dir := t.TempDir()
 
 	// Create a minimal index
@@ -102,8 +102,8 @@ func TestSignJAR_RoundTrip(t *testing.T) {
 	// Generate a self-signed cert + key
 	certPath, keyPath := generateTestCert(t, dir)
 
-	if err := SignJAR(dir, certPath, keyPath); err != nil {
-		t.Fatalf("SignJAR: %v", err)
+	if _, err := SignRepository(dir, certPath, keyPath); err != nil {
+		t.Fatalf("SignRepository: %v", err)
 	}
 	for _, name := range []string{"index-v2.json", "entry.json", "entry.jar"} {
 		if _, err := os.Stat(filepath.Join(dir, name)); err != nil {

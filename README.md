@@ -1,6 +1,6 @@
 # rustore-fdroid
 
-CLI tool to generate and manage [F-Droid](https://f-droid.org/) repositories populated with apps from [RuStore](https://rustore.ru/). It publishes both index v1 and index v2, and includes a read-only web frontend for browsing and adding the repository.
+CLI tool to generate and manage [F-Droid](https://f-droid.org/) repositories populated with apps from [RuStore](https://rustore.ru/). The `sign` command publishes both index v1 and index v2 metadata. An optional read-only web frontend lets users browse apps and add the repository to an F-Droid client.
 
 ## Install
 
@@ -18,7 +18,7 @@ go build -o rustore-fdroid .
 
 ## Usage
 
-All commands require `-r`/`--repo` flag pointing to the repository directory.
+Every repository operation requires the `-r`/`--repo` flag pointing to the repository directory.
 
 ### Initialize a new repository
 
@@ -34,9 +34,11 @@ Use `--frontend` to include the web UI in the repo directory.
 rustore-fdroid -r ./repo add <package_id> [package_id...]
 ```
 
-Downloads APKs, icons, screenshots, changelogs, developer contacts, and compatibility metadata from RuStore. Supports multiple package IDs in one call; metadata is fetched in parallel. If an APK is already present and its xxhash matches, the download is skipped.
+Fetches app metadata, current release notes, and developer contacts from RuStore. It also downloads APKs, icons, and screenshots, and extracts compatibility metadata from each APK. Multiple package IDs can be processed in one call, with metadata fetched in parallel. If an APK is already present and its xxHash matches RuStore metadata, the download is skipped.
 
-Only the latest APK for each app is retained.
+When a new APK version is added, it replaces older versions in the working index. Superseded files remain on disk until the next successful `sign`, which prevents a failed signing operation from breaking the previously published repository.
+
+TLS verification remains enabled for downloads. The official Russian Trusted Root CA bundled with the binary is applied only to `rustore.ru` and its subdomains.
 
 ### Update apps
 
@@ -44,7 +46,7 @@ Only the latest APK for each app is retained.
 rustore-fdroid -r ./repo update [package_id...]
 ```
 
-Updates specified apps or all apps in the repository if no arguments given. Metadata is fetched in parallel.
+Updates the specified apps, or every app in the repository when no package IDs are given. Metadata is fetched in parallel.
 
 ### Remove apps
 
@@ -52,7 +54,7 @@ Updates specified apps or all apps in the repository if no arguments given. Meta
 rustore-fdroid -r ./repo remove <package_id> [package_id...]
 ```
 
-Use `-k`/`--keep-files` to keep the icon and APK files on disk.
+Each app is removed from the working index immediately. Its APK, icon, and screenshots are removed after the next successful `sign`. Use `-k`/`--keep-files` to leave those files on disk.
 
 ### List apps
 
@@ -77,10 +79,10 @@ rustore-fdroid -r ./repo sign -c repo.crt -k repo.key
 Generates and publishes:
 
 - `index-v1.jar` for older and third-party clients
-- `index-v2.json` with localized metadata and verified media file hashes
-- `entry.json` and SHA256withRSA-signed `entry.jar` as the index v2 trust anchor
+- `index-v2.json` with localized metadata and SHA-256 file metadata
+- `entry.json` and a SHA-256-signed `entry.jar`, which authenticates the index v2 metadata
 
-The same certificate is used for v1 and v2, so the repository fingerprint remains stable. Diff files are not currently generated.
+Both JAR files use the same certificate, so the repository fingerprint remains stable across index versions. After publishing the indexes, `sign` deletes superseded files queued by `add`, `update`, or `remove`. Diff files are not currently generated.
 
 ## Web Frontend
 
@@ -94,7 +96,7 @@ rustore-fdroid -r ./repo frontend add
 rustore-fdroid -r ./repo frontend remove
 ```
 
-Point any HTTP server (Caddy, nginx, etc.) at the repo directory. The frontend reads `index-v1.json` and displays apps with search, screenshots, changelogs, metadata, and APK download links. After signing, it also displays the repository certificate fingerprint, an F-Droid deep link, and a QR code. Static per-app pages under `packages/<package_id>/` support index v2 `webBaseUrl` share links without server rewrites.
+Point any HTTP server (Caddy, nginx, etc.) at the repo directory. The frontend reads `index-v1.json` and displays apps with search, screenshots, release notes, metadata, and APK download links. When `sign` runs with the frontend installed, it also publishes the repository certificate fingerprint, an F-Droid deep link, and a QR code. Static per-app pages under `packages/<package_id>/` support index v2 `webBaseUrl` share links without server rewrites.
 
 ## License
 

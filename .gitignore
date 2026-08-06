@@ -1,4 +1,5 @@
 rustore-fdroid
+.direnv/
 
 # F-Droid repo directory
 repo/
@@ -10,3 +11,6 @@ repo/
 *.p12
 *.jks
 *.keystore
+
+# Public trust anchor embedded in the CLI
+!internal/certs/russian_trusted_root_ca.pem

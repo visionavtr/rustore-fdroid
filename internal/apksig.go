@@ -17,20 +17,6 @@ import (
 const apkSigBlockMagic = "APK Sig Block 42"
 const apkSigV2BlockID = 0x7109871a
 
-// ExtractAPKSig extracts the hex-encoded SHA-256 fingerprint of the APK
-// signing certificate. It tries JAR signature (v1) first, then falls back
-// to APK Signature Scheme v2.
-func ExtractAPKSig(apkPath string) (string, error) {
-	signers, err := ExtractAPKSigners(apkPath)
-	if err != nil {
-		return "", err
-	}
-	if len(signers) == 0 {
-		return "", fmt.Errorf("no APK signing certificates found")
-	}
-	return signers[0], nil
-}
-
 // ExtractAPKSigners returns the SHA-256 fingerprints of all APK signing
 // certificates found in the v1 or v2 signature data.
 func ExtractAPKSigners(apkPath string) ([]string, error) {

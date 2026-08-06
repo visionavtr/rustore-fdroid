@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
-	"time"
 )
 
 const (
@@ -88,7 +87,7 @@ type DownloadURL struct {
 // httpClient is a shared HTTP client with a reasonable timeout.
 // The timeout covers the entire request lifecycle including body download,
 // so it must be generous enough for large APK files (hundreds of MB).
-var httpClient = &http.Client{Timeout: 10 * time.Minute}
+var httpClient = newHTTPClient()
 
 // validPackageName matches a valid Android package name (Java-style identifier).
 var validPackageName = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$`)

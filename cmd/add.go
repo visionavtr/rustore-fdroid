@@ -98,16 +98,6 @@ func prefetchMetadata(packageIDs []string) map[string]prefetchResult {
 	return results
 }
 
-// addPackage fetches metadata and adds a package (used by update command).
-func addPackage(idx *internal.IndexV1, packageID string) error {
-	pf := prefetchMetadata([]string{packageID})
-	r := pf[packageID]
-	if r.err != nil {
-		return r.err
-	}
-	return addPackageWithMeta(idx, r.info, r.dlInfo)
-}
-
 func addPackageWithMeta(idx *internal.IndexV1, info *internal.AppInfo, dlInfo *internal.DownloadBody) error {
 	if err := internal.ValidatePackageName(info.PackageName); err != nil {
 		return err
