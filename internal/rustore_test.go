@@ -93,8 +93,9 @@ func TestFetchAppInfo_InvalidPackageName(t *testing.T) {
 
 func TestFetchAppInfo_ValidResponse(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if got := r.Header.Get(rustoreVersionHeader); got != rustoreVersionCode {
-			t.Errorf("%s header = %q, want %q", rustoreVersionHeader, got, rustoreVersionCode)
+		const acceptedVersionCode = "1105001"
+		if got := r.Header.Get(rustoreVersionHeader); got != acceptedVersionCode {
+			t.Errorf("%s header = %q, want %q", rustoreVersionHeader, got, acceptedVersionCode)
 		}
 		resp := OverallInfoResponse{
 			rustoreResponse: rustoreResponse{Code: "OK"},

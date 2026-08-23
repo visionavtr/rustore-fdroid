@@ -14,7 +14,8 @@ import (
 const (
 	rustoreBaseURL       = "https://backapi.rustore.ru/applicationData"
 	rustoreVersionHeader = "ruStoreVerCode"
-	rustoreVersionCode   = "1105002"
+	// The applicationData API rejects version 1105002 and newer with HTTP 419.
+	rustoreVersionCode = "1105001"
 )
 
 // Mutable for testing.
