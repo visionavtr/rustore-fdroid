@@ -2,7 +2,23 @@
 
 Go CLI tool that bridges RuStore apps into F-Droid repositories. It fetches app metadata and APKs, maintains `index-v1.json`, and publishes `index-v1.jar` plus index v2 metadata authenticated by a signed `entry.jar`.
 
+## Development Environment
+
+Run all development commands inside the flake dev shell. It provides Go,
+`gofmt`, and the C toolchain required by cgo:
+
+```bash
+nix develop
+```
+
+For one-off commands, use `nix develop --command <command>`, for example
+`nix develop --command go test ./...`. Do not work around missing host tools by
+disabling features such as cgo. If a required development tool is unavailable
+inside the dev shell, add it to `devShells.default` in `flake.nix`.
+
 ## Build & Run
+
+Run these commands from inside `nix develop`:
 
 ```bash
 go build -o rustore-fdroid .
