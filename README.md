@@ -84,6 +84,14 @@ Generates and publishes:
 
 Both JAR files use the same certificate, so the repository fingerprint remains stable across index versions. After publishing the indexes, `sign` deletes superseded files queued by `add`, `update`, or `remove`. Diff files are not currently generated.
 
+### Update and sign in one step
+
+```bash
+rustore-fdroid -r ./repo sync -c repo.crt -k repo.key [package_id...]
+```
+
+Runs `update` followed by `sign`, which suits a scheduled job. The repository is not signed when every app update fails.
+
 ## Web Frontend
 
 The frontend is embedded in the binary and can be managed with:

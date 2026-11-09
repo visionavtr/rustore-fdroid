@@ -11,46 +11,50 @@ var updateCmd = &cobra.Command{
 	Use:   "update [package_id...]",
 	Short: "Update apps in repository (all if no args given)",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		idx, err := internal.LoadIndexV1(repoPath)
-		if err != nil {
-			return err
-		}
-
-		if len(args) == 0 {
-			for _, app := range idx.Apps {
-				if app.PackageName != "" {
-					args = append(args, app.PackageName)
-				}
-			}
-		}
-
-		if len(args) == 0 {
-			fmt.Println("Repository is empty, nothing to update.")
-			return nil
-		}
-
-		prefetched := prefetchMetadata(args)
-		succeeded := 0
-		var failures []error
-
-		for _, packageID := range args {
-			fmt.Printf("--- %s ---\n", packageID)
-			pf := prefetched[packageID]
-			if pf.err != nil {
-				fmt.Printf("Error updating %s: %v\n", packageID, pf.err)
-				failures = append(failures, fmt.Errorf("%s: %w", packageID, pf.err))
-				continue
-			}
-			if err := addPackageWithMeta(idx, pf.info, pf.dlInfo); err != nil {
-				fmt.Printf("Error updating %s: %v\n", packageID, err)
-				failures = append(failures, fmt.Errorf("%s: %w", packageID, err))
-				continue
-			}
-			succeeded++
-		}
-
-		return finishPackageBatch(idx, "update", len(args), succeeded, failures)
+		return updatePackages(args)
 	},
+}
+
+func updatePackages(packageIDs []string) error {
+	idx, err := internal.LoadIndexV1(repoPath)
+	if err != nil {
+		return err
+	}
+
+	if len(packageIDs) == 0 {
+		for _, app := range idx.Apps {
+			if app.PackageName != "" {
+				packageIDs = append(packageIDs, app.PackageName)
+			}
+		}
+	}
+
+	if len(packageIDs) == 0 {
+		fmt.Println("Repository is empty, nothing to update.")
+		return nil
+	}
+
+	prefetched := prefetchMetadata(packageIDs)
+	succeeded := 0
+	var failures []error
+
+	for _, packageID := range packageIDs {
+		fmt.Printf("--- %s ---\n", packageID)
+		pf := prefetched[packageID]
+		if pf.err != nil {
+			fmt.Printf("Error updating %s: %v\n", packageID, pf.err)
+			failures = append(failures, fmt.Errorf("%s: %w", packageID, pf.err))
+			continue
+		}
+		if err := addPackageWithMeta(idx, pf.info, pf.dlInfo); err != nil {
+			fmt.Printf("Error updating %s: %v\n", packageID, err)
+			failures = append(failures, fmt.Errorf("%s: %w", packageID, err))
+			continue
+		}
+		succeeded++
+	}
+
+	return finishPackageBatch(idx, "update", len(packageIDs), succeeded, failures)
 }
 
 func init() {

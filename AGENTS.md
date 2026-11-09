@@ -28,7 +28,7 @@ go build -o rustore-fdroid .
 ## Project Structure
 
 - `main.go` — entry point
-- `cmd/` — Cobra commands (`init`, `add`, `remove`, `list`, `update`, `sign`, and `frontend add|remove`)
+- `cmd/` — Cobra commands (`init`, `add`, `remove`, `list`, `update`, `sign`, `sync`, and `frontend add|remove`)
 - `internal/` — core logic:
   - `rustore.go`, `http.go`, `retry.go` — RuStore API access, scoped CA trust, and retries
   - `download.go` — atomic downloads, hashing, and progress reporting
