@@ -123,6 +123,9 @@ func fetchAppInfo(packageID string) (*AppInfo, error) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, permanent(fmt.Errorf("app %q not found in RuStore", packageID))
+	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("fetch app info: HTTP %d", resp.StatusCode)
 	}
@@ -138,7 +141,7 @@ func fetchAppInfo(packageID string) (*AppInfo, error) {
 	}
 
 	if result.Code == "ERROR" {
-		return nil, fmt.Errorf("app %q not found in RuStore", packageID)
+		return nil, permanent(fmt.Errorf("app %q not found in RuStore", packageID))
 	}
 
 	if err := ValidatePackageName(result.Body.PackageName); err != nil {

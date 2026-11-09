@@ -160,6 +160,34 @@ func TestFetchAppInfo_AppNotFound(t *testing.T) {
 	}
 }
 
+func TestFetchAppInfo_NotFoundStatusIsNotRetried(t *testing.T) {
+	requests := 0
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(rustoreResponse{
+			Code:    "ERROR",
+			Message: "Couldn't find required data, error: android_app_ver",
+		})
+	}))
+	defer ts.Close()
+
+	origGet := fetchAppInfoURL
+	fetchAppInfoURL = ts.URL + "/"
+	defer func() { fetchAppInfoURL = origGet }()
+
+	_, err := FetchAppInfo("com.nonexistent.app")
+	if err == nil {
+		t.Fatal("expected error for HTTP 404, got nil")
+	}
+	if !strings.Contains(err.Error(), `app "com.nonexistent.app" not found in RuStore`) {
+		t.Errorf("unexpected error: %s", err)
+	}
+	if requests != 1 {
+		t.Errorf("got %d requests, want 1", requests)
+	}
+}
+
 func TestFetchDownloadLink_HTTPStatusError(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
